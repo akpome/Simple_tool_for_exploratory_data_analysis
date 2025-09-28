@@ -1,1 +1,7 @@
 streamlit
+pandas
+np
+validators
+openpyxl
+requests
+plotly
