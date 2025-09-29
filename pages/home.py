@@ -251,7 +251,6 @@ def dialog(col, kind, msg, prompt):
                         st.session_state.df[['Column0', 'Column1']] = st.session_state.df[col].str.split(dialog_input, expand=True)
                         st.rerun()
 
-
 def load_dataframe(loaded_file, file_ext, response=None):
 
     file_ext = file_ext
@@ -272,7 +271,6 @@ def load_dataframe(loaded_file, file_ext, response=None):
         st.session_state.dataframe = pd.read_excel(loaded_file, engine='openpyxl')           
             
     st.session_state.df = st.session_state.dataframe
-
 
 def download_file():
     selection = st.session_state.file_ext.lower()
@@ -376,7 +374,6 @@ def match_axis_colors(i):
         if len(st.session_state[f'y-axis {i}']) != len(st.session_state[f'color {i}']):
             st.error('y-axis selections must be equal to selected colors')
             st.stop()
-
 def main():
     
     st.set_page_config(layout='wide')
@@ -444,8 +441,7 @@ def main():
                         width='medium'
                     ) for col in metadata_df.columns
                 }
-            )
-                
+            )                
     
     with tab2:
 
