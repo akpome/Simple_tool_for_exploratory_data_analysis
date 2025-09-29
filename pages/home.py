@@ -564,8 +564,8 @@ def main():
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'x-axis {i}'])
                     
-                        if chart and f'x-axis {i}' in chart:                  
-                            st.success(chart[f'x-axis {i}']) 
+                        if chart and f'x-a               xis {i}' in chart:                  
+                            st.success(chart[f'x-axis {i}']   ) 
                         
                         st.multiselect('Select y-axis:*', options=st.session_state.df.columns, 
                                                 key=f'y-axis {i}',
@@ -574,7 +574,7 @@ def main():
                     
                         if chart and f'x-axis {i}' in chart:                  
                             st.success(chart[f'y-axis {i}'])  
-                        
+                             
                         st.number_input('Enter bin size:*', key=f'bins {i}')                       
 
                         if chart and f'bins {i}' in chart:
@@ -611,7 +611,7 @@ def main():
                                     and st.session_state.numberof_charts == i + 1:
                             
                             if st.button(':material/add: Add Chart', key=f'add_button_{i}'):
-                                if st.session_state.numberof_charts <= 3:
+                                if st.session_state.numberof_charts < 4:
                                     st.session_state.numberof_charts += 1
                                     st.rerun()
 
