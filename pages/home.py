@@ -34,7 +34,7 @@ def get_column_metadata(df, ncols, scols):
     for col in df.columns:
         if col in scols:
             metadata['Empty String Count'] = metadata.get('Empty String Count', pd.Series(dtype=object))
-            metadata['Empty String Count'][col] = (df[col].astype(str).str.strip() == "").sum()
+            metadata['Empty String Count'][col] = (df[col].astype(str).str.strip() == '').sum()
     
     for col in df.columns:
         if col in ncols:
@@ -232,11 +232,11 @@ def filter_table():
         st.rerun()       
         
     
-@st.dialog(" ")
+@st.dialog(' ')
 def dialog(col, kind, msg, prompt):
     st.write(msg)
     dialog_input = st.text_input(prompt, key=kind).strip()
-    if st.button("Submit"):
+    if st.button('Submit'):
         if len(dialog_input) > 50 or len(dialog_input) == 0:  
             st.error('Invalid input')
         else:      
@@ -256,20 +256,20 @@ def load_dataframe(loaded_file, file_ext, response=None):
 
     file_ext = file_ext
     
-    if file_ext not in [".xlsx", "xls", ".parquet", ".csv"]:
-        st.error(f"Invalid file type: {file_ext}. Please upload a .csv, .parquet or Excel file (.xlsx or .xls).")
+    if file_ext not in ['.xlsx', 'xls', '.parquet', '.csv']:
+        st.error(f'Invalid file type: {file_ext}. Please upload a .csv, .parquet or Excel file (.xlsx or .xls).')
         st.stop()
     
     if response:
         with open(loaded_file, 'wb') as file:
             file.write(response.content)    
 
-    if file_ext == ".csv":
+    if file_ext == '.csv':
         st.session_state.dataframe = pd.read_csv(loaded_file)
-    elif file_ext == ".parquet":
+    elif file_ext == '.parquet':
         st.session_state.dataframe = pd.read_parquet(loaded_file)
-    elif file_ext in [".xlsx", ".xls"]:
-        st.session_state.dataframe = pd.read_excel(loaded_file, engine="openpyxl")           
+    elif file_ext in ['.xlsx', '.xls']:
+        st.session_state.dataframe = pd.read_excel(loaded_file, engine='openpyxl')           
             
     st.session_state.df = st.session_state.dataframe
 
@@ -285,7 +285,7 @@ def download_file():
     if 'docs.google.com' in url:
         sheet_name = 'sheet1'
         sheet_id = re.search(r'/d/([a-zA-Z0-9_-]+)', url).group(1)
-        url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
+        url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
         selection = '.csv'
     if '1drv.ms' in url:
         url = f'{url}&download=1'
@@ -299,7 +299,7 @@ def download_file():
             case '.parquet':
                 st.session_state.dataframe = pd.read_parquet(io.StringIO(response.content.decode('utf-8')))
             case '.xlsx':
-                st.session_state.dataframe = pd.read_excel(io.BytesIO(response.content), engine="openpyxl")
+                st.session_state.dataframe = pd.read_excel(io.BytesIO(response.content), engine='openpyxl')
         if not st.session_state.dataframe.empty:
             st.session_state.downloaded = True
             st.session_state.df = st.session_state.dataframe
@@ -360,7 +360,7 @@ def render_chart(i, update=False):
     else:
         st.session_state.charts_array[i] = st.session_state[f'chart_settings_{i}']
 
-    st.switch_page("pages/dashboard.py")
+    st.switch_page('pages/dashboard.py')
 
 def validate_input(i):
     if st.session_state[f'chart title {i}'] and (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}']\
@@ -379,7 +379,7 @@ def match_axis_colors(i):
 
 def main():
     
-    st.set_page_config(layout="wide")
+    st.set_page_config(layout='wide')
     
     if 'df' not in st.session_state:
         st.session_state.df = pd.DataFrame()
@@ -390,18 +390,18 @@ def main():
     if 'uploaded_file' not in st.session_state:
         st.session_state.uploaded_file = None
 
-    st.markdown("##### Simple tool for exploratory data analysis")
+    st.markdown('##### Simple tool for exploratory data analysis')
 
-    tab1, tab2, tab3, tab4 = st.tabs(["Ingest Data","Transform Data", "Data Table", "Create Charts"])
+    tab1, tab2, tab3, tab4 = st.tabs(['Ingest Data','Transform Data', 'Data Table', 'Create Charts'])
 
     with tab1: 
         if not st.session_state.downloaded:
             with st.container(border=True,key='container_00'):
                 try:
-                    st.session_state.uploaded_file = st.file_uploader("Upload file:", 
+                    st.session_state.uploaded_file = st.file_uploader('Upload file:', 
                             accept_multiple_files=False,
                             on_change = initialize_state,
-                            type=["csv", "parquet","xlsx","xls"]
+                            type=['csv', 'parquet','xlsx','xls']
                         )
             
                     if st.session_state.uploaded_file and st.session_state.df.empty:
@@ -421,13 +421,13 @@ def main():
 
             with st.container(border=True,key='container_01'):
                 url_input = st.text_input('Enter file url:', key='url').lower().strip()
-                st.selectbox(f"Select file type:", options=['.CSV', '.PARQUET','EXCEL'], key='file_ext')
+                st.selectbox(f'Select file type:', options=['.CSV', '.PARQUET','EXCEL'], key='file_ext')
                 if st.button('Import file') and validators.url(url_input):
                     download_file()
                 
                 if st.session_state.downloaded:
                     with st.container(horizontal=True, horizontal_alignment='right'):
-                        if st.button("Clear import"):
+                        if st.button('Clear import'):
                             initialize_state()
                             st.rerun()
 
@@ -440,8 +440,8 @@ def main():
                 column_config={
                     col: st.column_config.Column(
                         col,
-                        help=f"Statistics for {col}",
-                        width="medium"
+                        help=f'Statistics for {col}',
+                        width='medium'
                     ) for col in metadata_df.columns
                 }
             )
@@ -451,7 +451,7 @@ def main():
 
         if not st.session_state.df.empty:
             options = [Options.stm, Options.sfh,Options.cat,Options.gbc,Options.trt,Options.fbc,Options.pvt]
-            st.selectbox(f"Table Transform", 
+            st.selectbox(f'Table Transform', 
                                     options=options, 
                                     key='table',
                                     on_change=on_selection_change, 
@@ -464,7 +464,7 @@ def main():
                 options = numeric_options
             elif col in string_cols:
                 options = string_options            
-            st.selectbox(f"{col} Column Transform", 
+            st.selectbox(f'{col} Column Transform', 
                                     options=options, 
                                     key=col,
                                     on_change=on_selection_change, 
@@ -485,7 +485,7 @@ def main():
         if not st.session_state.numberof_charts:
         
             with st.container(horizontal=True, horizontal_alignment='right'):
-                if st.button(":material/add: Add Chart", key=f'add_button_{0}'):
+                if st.button(':material/add: Add Chart', key=f'add_button_{0}'):
                     st.session_state.numberof_charts += 1
                     st.rerun()
         else:
@@ -535,7 +535,7 @@ def main():
                     if chart:
                         st.success(chart[f'chart title {i}'])
 
-                    st.selectbox("Select chart type:*", options=[e.value for e in Charts], 
+                    st.selectbox('Select chart type:*', options=[e.value for e in Charts], 
                                             key=f'chart {i}',
                                             on_change=on_chart_selection_change, 
                                             args=[f'chart {i}'])
@@ -545,7 +545,7 @@ def main():
                     
                     if st.session_state[f'pie chart {i}']: 
 
-                        st.selectbox("Select labels:*", options=st.session_state.df.columns, 
+                        st.selectbox('Select labels:*', options=st.session_state.df.columns, 
                                                 key=f'labels {i}',
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'labels {i}'])
@@ -553,7 +553,7 @@ def main():
                         if chart and f'labels {i}' in chart:                   
                             st.success(chart[f'labels {i}'])
 
-                        st.selectbox("Select values:*", options=st.session_state.df.columns, 
+                        st.selectbox('Select values:*', options=st.session_state.df.columns, 
                                                 key=f'values {i}',
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'values {i}'])
@@ -563,7 +563,7 @@ def main():
                     
                     elif st.session_state[f'histogram chart {i}']:
 
-                        st.selectbox("Select x-axis:*", options=st.session_state.df.columns, 
+                        st.selectbox('Select x-axis:*', options=st.session_state.df.columns, 
                                                 key=f'x-axis {i}',
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'x-axis {i}'])
@@ -571,7 +571,7 @@ def main():
                         if chart and f'x-axis {i}' in chart:                  
                             st.success(chart[f'x-axis {i}']) 
                         
-                        st.multiselect("Select y-axis:*", options=st.session_state.df.columns, 
+                        st.multiselect('Select y-axis:*', options=st.session_state.df.columns, 
                                                 key=f'y-axis {i}',
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'y-axis {i}'])
@@ -583,10 +583,9 @@ def main():
 
                         if chart and f'bins {i}' in chart:
                             st.success(chart[f'bins {i}'])
-
                     else:                    
 
-                        st.selectbox("Select x-axis:*", options=st.session_state.df.columns,
+                        st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
                                                 key=f'x-axis {i}',
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'x-axis {i}'])
@@ -594,7 +593,7 @@ def main():
                         if chart and f'x-axis {i}' in chart:                  
                             st.success(chart[f'x-axis {i}']) 
                         
-                        st.multiselect("Select y-axis:*", options=st.session_state.df.columns, 
+                        st.multiselect('Select y-axis:*', options=st.session_state.df.columns, 
                                                 key=f'y-axis {i}',
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'y-axis {i}'])
@@ -602,7 +601,7 @@ def main():
                         if chart and f'y-axis {i}' in chart:                  
                             st.success(chart[f'y-axis {i}']) 
                                 
-                        st.multiselect("Select color(s):*", options=[e.value for e in Colors], 
+                        st.multiselect('Select color(s):*', options=[e.value for e in Colors], 
                                                 key=f'color {i}',
                                                 on_change=on_chart_selection_change, 
                                                 args=[f'color {i}'])
@@ -615,12 +614,12 @@ def main():
                         if len(st.session_state.charts_array) == st.session_state.numberof_charts\
                                     and st.session_state.numberof_charts == i + 1:
                             
-                            if st.button(":material/add: Add Chart", key=f'add_button_{i}'):
+                            if st.button(':material/add: Add Chart', key=f'add_button_{i}'):
                                 if st.session_state.numberof_charts <= 3:
                                     st.session_state.numberof_charts += 1
                                     st.rerun()
 
-                            if st.button(":material/remove: Remoove Chart", key=f'remove_button_{i}'):
+                            if st.button(':material/remove: Remoove Chart', key=f'remove_button_{i}'):
                                 st.session_state.charts_array.pop()
                                 st.session_state.numberof_charts -= 1
                                 st.rerun()   
@@ -633,7 +632,7 @@ def main():
                         elif len(st.session_state.charts_array) < st.session_state.numberof_charts\
                                     and st.session_state.numberof_charts == i + 1:  
                                                             
-                            if st.button("Cancel", key=f'cancel_button_{i}'):
+                            if st.button('Cancel', key=f'cancel_button_{i}'):
                                 st.session_state.numberof_charts -= 1
                                 st.rerun()
                             
@@ -648,5 +647,5 @@ def main():
                                 if st.button('Update', key=f'update_button_{i}'):
                                     render_chart(i, True)
                                 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
