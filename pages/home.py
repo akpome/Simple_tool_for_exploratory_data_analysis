@@ -616,8 +616,9 @@ def main():
                                     and st.session_state.numberof_charts == i + 1:
                             
                             if st.button(":material/add: Add Chart", key=f'add_button_{i}'):
-                                st.session_state.numberof_charts += 1
-                                st.rerun()
+                                if st.session_state.numberof_charts <= 3:
+                                    st.session_state.numberof_charts += 1
+                                    st.rerun()
 
                             if st.button(":material/remove: Remoove Chart", key=f'remove_button_{i}'):
                                 st.session_state.charts_array.pop()
