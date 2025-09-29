@@ -22,7 +22,7 @@ def chart_row(n, second_row=False):
             chart = st.session_state.charts_array[i]
             with st.container():
                 title = chart[f'chart title {i}']
-                st.markdown(f"<div style='text-align: center; color: grey;'>{title}</div>", unsafe_allow_html=True)
+                st.markdown(f'<div style="text-align: center; color: grey;">{title}</div>', unsafe_allow_html=True)
             match chart[f'chart {i}']:
                 case Charts.LCH.value | Charts.ACH.value | Charts.BCH.value | Charts.SCH.value:
                     chart_funcs_dict[chart[f'chart {i}']](chart[f'chart dataframe {i}'], 
@@ -62,5 +62,5 @@ def main():
             except Exception as e:
                     st.error('Error rendering chart. Please review your settings and try again')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
