@@ -15,16 +15,17 @@ import io
 import re
 import sys
 from pathlib import Path
-
+# import statics from parent directory
 dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))
 
 
+# create columns metadata and statistics
 def get_column_metadata(df, ncols, scols):
-    # Create metadata dictionary with metrics as keys
+    # save dataframe row and column count for display
     st.session_state.row_count = df.shape[0]
     st.session_state.column_count = df.shape[1]
-
+    # create dictionary for dataframe metadata
     metadata = {
         'Data Type': df.dtypes.astype(str),
         'Null Count': df.isnull().sum(),
@@ -38,7 +39,6 @@ def get_column_metadata(df, ncols, scols):
             metadata['Empty String Count'][col] = (
                 df[col].astype(str).str.strip() == '').sum()
 
-    for col in df.columns:
         if col in ncols:
             metadata['Zero Count'] = metadata.get(
                 'Zero Count', pd.Series(dtype=int))
@@ -75,7 +75,7 @@ def get_column_metadata(df, ncols, scols):
     return metadata_df
 
 
-def on_selection_change(col):
+def on_selection_change(col):  # function for table and column transformation
     selection = st.session_state[col]
     match selection:
         case Options.rmc:
@@ -163,6 +163,7 @@ def on_selection_change(col):
 
 
 @st.dialog(' ')
+# create datetime column from numeric value
 def numeric_date_conversion(col, msg):
     st.write(msg)
     dialog_input = st.text_input(
@@ -198,7 +199,7 @@ def numeric_date_conversion(col, msg):
 
 
 @st.dialog(' ')
-def pivot_dialog():
+def pivot_dialog():  # to pivot table
     st.write('Pivot Table')
     indices = st.multiselect(f'Index:', options=st.session_state.df.columns)
     column = st.selectbox(f'Column:', options=st.session_state.df.columns)
@@ -219,7 +220,7 @@ def pivot_dialog():
 
 
 @st.dialog(' ')
-def group_by():
+def group_by():  # data transformation: group by
     st.write('Group by')
     columns = st.multiselect(f'Select column(s):',
                              options=st.session_state.df.columns)
@@ -237,7 +238,7 @@ def group_by():
 
 
 @st.dialog(' ')
-def filter_table():
+def filter_table():  # data transformation: filter
     operators = {
         'equal to': '==',
         'not equal to': '!=',
@@ -260,7 +261,7 @@ def filter_table():
 
 
 @st.dialog(' ')
-def dialog(col, kind, msg, prompt):
+def dialog(col, kind, msg, prompt):  # to rename or split column
     st.write(msg)
     dialog_input = st.text_input(prompt, key=kind).strip()
     if st.button('Submit'):
@@ -282,7 +283,7 @@ def dialog(col, kind, msg, prompt):
                         st.rerun()
 
 
-def load_dataframe(loaded_file, file_ext, response=None):
+def load_dataframe(loaded_file, file_ext):  # load uploaded file
 
     file_ext = file_ext
 
@@ -290,10 +291,6 @@ def load_dataframe(loaded_file, file_ext, response=None):
         st.error(
             f'Invalid file type: {file_ext}. Please upload a .csv, .parquet or Excel file (.xlsx or .xls).')
         st.stop()
-
-    if response:
-        with open(loaded_file, 'wb') as file:
-            file.write(response.content)
 
     if file_ext == '.csv':
         st.session_state.dataframe = pd.read_csv(loaded_file)
@@ -306,7 +303,7 @@ def load_dataframe(loaded_file, file_ext, response=None):
     st.session_state.df = st.session_state.dataframe
 
 
-def download_file():
+def download_file():  # download from cloud storage
     selection = st.session_state.file_type.lower()
     url = st.session_state.url
     if 'drive.google.com' in url and ('sharing' in url or 'drive_link' in url):
@@ -342,7 +339,7 @@ def download_file():
         st.error('Error importing file or invallid file format')
 
 
-def on_chart_selection_change(settings):
+def on_chart_selection_change(settings):  # selection of chart type
     h, i = settings.split()
     match st.session_state[f'chart {i}']:
         case Charts.LCH.value | Charts.ACH.value | Charts.BCH.value | Charts.SCH.value:
@@ -356,23 +353,26 @@ def on_chart_selection_change(settings):
             st.session_state[f'pie chart {i}'] = False
 
 
+# options for string columns
 string_options = [Options.stm, Options.cts, Options.cci, Options.ccd, Options.cdc, Options.rer,
                   Options.rnc, Options.spc, Options.asc, Options.dsc, Options.rmc]
-
+# options for numeric columns
 numeric_options = [Options.stm, Options.rnz, Options.rnm, Options.cts, Options.rnr, Options.fnd,
                    Options.fnu, Options.ccs, Options.cdc, Options.rnc, Options.asc, Options.dsc,
                    Options.rmc]
-
+# options for date columns
 datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.cdy, Options.ctc,
                     Options.asc, Options.dsc, Options.rmc]
-    
+
+
 def init_state():
     st.session_state.dataframe = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
     st.session_state.uploaded_file = None
     st.session_state.downloaded = False
 
-def render_chart(i, update=False):
+
+def render_chart(i, update=False):  # rendering charts of dashboard page
     match_axis_colors(i)
     st.session_state[f'chart_settings_{i}'][f'chart title {i}'] = st.session_state[f'chart title {i}']
     st.session_state[f'chart_settings_{i}'][f'chart dataframe {i}'] = st.session_state.df
@@ -399,17 +399,17 @@ def render_chart(i, update=False):
     st.switch_page('pages/dashboard.py')
 
 
-def validate_input(i):
+def validate_input(i):  # validate all required inputs are present
     if st.session_state[f'chart title {i}'] and (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}']
-                                                 and st.session_state[f'y-axis {i}'] and st.session_state[f'bins {i}']) or (st.session_state[f'chart {i}']
-                                                                                                                            and st.session_state[f'labels {i}'] and st.session_state[f'values {i}']) or (st.session_state[f'chart {i}']
-                                                                                                                                                                                                         and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}']):
+                                                 and st.session_state[f'y-axis {i}']) or (st.session_state[f'chart {i}']
+                                                                                          and st.session_state[f'labels {i}'] and st.session_state[f'values {i}']) or (st.session_state[f'chart {i}']
+                                                                                                                                                                       and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}']):
         return True
     else:
         return False
 
 
-def match_axis_colors(i):
+def match_axis_colors(i):  # match selected colors with y-axis
     if f'y-axis {i}' in st.session_state and st.session_state[f'color {i}']:
         if len(st.session_state[f'y-axis {i}']) != len(st.session_state[f'color {i}']):
             st.error('y-axis selections must be equal to selected colors')
@@ -433,10 +433,10 @@ def main():
 
     tab1, tab2, tab3, tab4 = st.tabs(
         ['Ingest Data', 'Transform Data', 'Data Table', 'Create Charts'])
-
+    # data ingest tab
     with tab1:
         if not st.session_state.downloaded:
-            with st.container(border=True, key='container_00'):
+            with st.container(border=True):
                 try:
                     st.session_state.uploaded_file = st.file_uploader('Upload file:',
                                                                       accept_multiple_files=False,
@@ -452,7 +452,7 @@ def main():
                             st.session_state.uploaded_file, file_ext)
                 except Exception as e:
                     st.error('File upload error')
-
+        # get column data types
         numeric_cols = st.session_state.df.select_dtypes(
             include=[np.number]).columns
         string_cols = st.session_state.df.select_dtypes(
@@ -465,7 +465,7 @@ def main():
 
         if not st.session_state.uploaded_file:
 
-            with st.container(border=True, key='container_01'):
+            with st.container(border=True):
                 url_input = st.text_input(
                     'Enter file url:', key='url').lower().strip()
                 st.selectbox(f'Select file type:', options=[
@@ -492,10 +492,11 @@ def main():
                     ) for col in metadata_df.columns
                 }
             )
-
+    # transform data tab
     with tab2:
 
         if not st.session_state.df.empty:
+            # options for table transform
             options = [Options.stm, Options.sfh, Options.cat,
                        Options.gbc, Options.trt, Options.fbc, Options.pvt]
             st.selectbox(f'Table Transform',
@@ -506,23 +507,26 @@ def main():
 
         for col in st.session_state.df.columns:
             if col in datetime_cols:
+                # date column transform options
                 options = datetime_options
             elif col in numeric_cols:
+                # numeric column transform options
                 options = numeric_options
             elif col in string_cols:
+                # string column transform options
                 options = string_options
             st.selectbox(f'{col} Column Transform',
                          options=options,
                          key=col,
                          on_change=on_selection_change,
                          args=[col])
-
+    # data table tab
     with tab3:
         if not st.session_state.df.empty:
             st.dataframe(st.session_state.df)
 
+    # create chart tab
     with tab4:
-
         if 'numberof_charts' not in st.session_state:
             st.session_state.numberof_charts = 0
 
@@ -530,7 +534,7 @@ def main():
             st.session_state.charts_array = []
 
         if not st.session_state.numberof_charts:
-
+            # container for add chart
             with st.container(horizontal=True, horizontal_alignment='right'):
                 if st.button(':material/add: Add Chart', key=f'add_button_{0}'):
                     st.session_state.numberof_charts += 1
@@ -575,7 +579,7 @@ def main():
                     chart = {}
 
                 with st.expander(f'Chart {i + 1}'):
-
+                    # create chart form
                     st.text_input('Enter a descriptive title for chart:*',
                                   key=f'chart title {i}')
 
@@ -655,7 +659,7 @@ def main():
 
                         if chart and f'color {i}' in chart:
                             st.success(chart[f'color {i}'])
-
+                    # container for form buttons
                     with st.container(horizontal=True, horizontal_alignment='right', vertical_alignment='center'):
 
                         if len(st.session_state.charts_array) == st.session_state.numberof_charts\
