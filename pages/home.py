@@ -307,9 +307,7 @@ def load_dataframe(loaded_file, file_ext, response=None):
 
 
 def download_file():
-    selection = st.session_state.file_ext.lower()
-    if selection == 'EXCEL':
-        selection = '.xlsx'
+    selection = st.session_state.file_type.lower()
     url = st.session_state.url
     if 'drive.google.com' in url and ('sharing' in url or 'drive_link' in url):
         file_id = re.search(r'/d/([a-zA-Z0-9_-]+)', url).group(1)
@@ -318,7 +316,7 @@ def download_file():
         sheet_name = 'sheet1'
         sheet_id = re.search(r'/d/([a-zA-Z0-9_-]+)', url).group(1)
         url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
-        selection = '.csv'
+        selection = 'csv'
     if '1drv.ms' in url:
         url = f'{url}&download=1'
     # Download the file
@@ -326,13 +324,13 @@ def download_file():
         response = requests.get(url)
         response.raise_for_status()
         match selection:
-            case '.csv':
+            case 'csv':
                 st.session_state.dataframe = pd.read_csv(
                     io.StringIO(response.content.decode('utf-8')))
-            case '.parquet':
+            case 'parquet':
                 st.session_state.dataframe = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
-            case '.xlsx':
+            case 'excel':
                 st.session_state.dataframe = pd.read_excel(
                     io.BytesIO(response.content), engine='openpyxl')
         if not st.session_state.dataframe.empty:
@@ -367,14 +365,12 @@ numeric_options = [Options.stm, Options.rnz, Options.rnm, Options.cts, Options.r
 
 datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.cdy, Options.ctc,
                     Options.asc, Options.dsc, Options.rmc]
-
-
-def initialize_state():
+    
+def init_state():
     st.session_state.dataframe = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
+    st.session_state.uploaded_file = None
     st.session_state.downloaded = False
-    st.session_state.uploaded_file = False
-
 
 def render_chart(i, update=False):
     match_axis_colors(i)
@@ -444,9 +440,9 @@ def main():
                 try:
                     st.session_state.uploaded_file = st.file_uploader('Upload file:',
                                                                       accept_multiple_files=False,
-                                                                      on_change=initialize_state,
+                                                                      on_change=init_state,
                                                                       type=[
-                                                                          'csv', 'parquet', 'xlsx', 'xls']
+                                                                          'csv', 'parquet', 'excel']
                                                                       )
 
                     if st.session_state.uploaded_file and st.session_state.df.empty:
@@ -473,14 +469,14 @@ def main():
                 url_input = st.text_input(
                     'Enter file url:', key='url').lower().strip()
                 st.selectbox(f'Select file type:', options=[
-                             '.CSV', '.PARQUET', 'EXCEL'], key='file_ext')
+                             'CSV', 'PARQUET', 'EXCEL'], key='file_type')
                 if st.button('Import file') and validators.url(url_input):
                     download_file()
 
                 if st.session_state.downloaded:
                     with st.container(horizontal=True, horizontal_alignment='right'):
                         if st.button('Clear import'):
-                            initialize_state()
+                            init_state()
                             st.rerun()
 
         if not st.session_state.df.empty:
