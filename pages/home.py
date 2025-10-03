@@ -301,6 +301,8 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
             loaded_file, engine='openpyxl')
 
     st.session_state.df = st.session_state.dataframe
+    st.session_state.uploaded = True
+    st.rerun()
 
 
 def download_file():  # download from cloud storage
@@ -331,8 +333,8 @@ def download_file():  # download from cloud storage
                 st.session_state.dataframe = pd.read_excel(
                     io.BytesIO(response.content), engine='openpyxl')
         if not st.session_state.dataframe.empty:
-            st.session_state.downloaded = True
             st.session_state.df = st.session_state.dataframe
+            st.session_state.downloaded = True
             st.rerun()
 
     except Exception as e:
@@ -368,8 +370,8 @@ datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.
 def init_state():
     st.session_state.dataframe = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
-    st.session_state.uploaded_file = None
     st.session_state.downloaded = False
+    st.session_state.uploaded = False
 
 
 def render_chart(i, update=False):  # rendering charts of dashboard page
@@ -426,8 +428,8 @@ def main():
     if 'downloaded' not in st.session_state:
         st.session_state.downloaded = False
 
-    if 'uploaded_file' not in st.session_state:
-        st.session_state.uploaded_file = None
+    if 'uploaded' not in st.session_state:
+        st.session_state.uploaded = False
 
     st.markdown('##### Simple tool for exploratory data analysis')
 
@@ -435,23 +437,33 @@ def main():
         ['Ingest Data', 'Transform Data', 'Data Table', 'Create Charts'])
     # data ingest tab
     with tab1:
-        if not st.session_state.downloaded:
+        if not st.session_state.downloaded and not st.session_state.uploaded:
+            # upload widget container
             with st.container(border=True):
                 try:
-                    st.session_state.uploaded_file = st.file_uploader('Upload file:',
-                                                                      accept_multiple_files=False,
-                                                                      on_change=init_state,
-                                                                      type=[
-                                                                          'csv', 'parquet', 'excel']
-                                                                      )
-
-                    if st.session_state.uploaded_file and st.session_state.df.empty:
-                        file_name = st.session_state.uploaded_file.name
+                    uploaded_file = st.file_uploader('Upload file:', # upload widget
+                                                                        accept_multiple_files=False,
+                                                                        on_change=init_state,
+                                                                        type=[
+                                                                            'csv', 'parquet', 'excel']
+                                                                )
+                    if uploaded_file: 
+                        file_name = uploaded_file.name
                         file_ext = os.path.splitext(file_name)[1].lower()
-                        load_dataframe(
-                            st.session_state.uploaded_file, file_ext)
+                        load_dataframe(uploaded_file, file_ext)
+                        
                 except Exception as e:
                     st.error('File upload error')
+
+            # import container
+            with st.container(border=True):
+                url_input = st.text_input(
+                    'Enter file url:', key='url').lower().strip()
+                st.selectbox(f'Select file type:', options=[
+                                'CSV', 'PARQUET', 'EXCEL'], key='file_type')
+                if st.button('Import file') and validators.url(url_input):
+                    download_file()
+                    
         # get column data types
         numeric_cols = st.session_state.df.select_dtypes(
             include=[np.number]).columns
@@ -463,21 +475,11 @@ def main():
         metadata_df = get_column_metadata(
             st.session_state.df, numeric_cols, string_cols)
 
-        if not st.session_state.uploaded_file:
-
-            with st.container(border=True):
-                url_input = st.text_input(
-                    'Enter file url:', key='url').lower().strip()
-                st.selectbox(f'Select file type:', options=[
-                             'CSV', 'PARQUET', 'EXCEL'], key='file_type')
-                if st.button('Import file') and validators.url(url_input):
-                    download_file()
-
-                if st.session_state.downloaded:
-                    with st.container(horizontal=True, horizontal_alignment='right'):
-                        if st.button('Clear import'):
-                            init_state()
-                            st.rerun()
+        if st.session_state.downloaded or st.session_state.uploaded:
+            with st.container(horizontal=True, horizontal_alignment='right'):
+                if st.button('Clear data'):
+                    init_state()
+                    st.rerun()
 
         if not st.session_state.df.empty:
             st.write(f'Row Count: {st.session_state.row_count}')
@@ -492,6 +494,7 @@ def main():
                     ) for col in metadata_df.columns
                 }
             )
+
     # transform data tab
     with tab2:
 
@@ -520,6 +523,7 @@ def main():
                          key=col,
                          on_change=on_selection_change,
                          args=[col])
+
     # data table tab
     with tab3:
         if not st.session_state.df.empty:
@@ -659,6 +663,7 @@ def main():
 
                         if chart and f'color {i}' in chart:
                             st.success(chart[f'color {i}'])
+
                     # container for form buttons
                     with st.container(horizontal=True, horizontal_alignment='right', vertical_alignment='center'):
 
