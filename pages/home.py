@@ -15,6 +15,7 @@ import io
 import re
 import sys
 from pathlib import Path
+
 # import statics from parent directory
 dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))

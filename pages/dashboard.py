@@ -5,14 +5,15 @@ import streamlit as st
 import plotly.express as px
 import sys
 from pathlib import Path
-# import statics from parent directory
+
+# required to import statics from parent directory
 dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))
 
 
 def chart_row(n, second_row=False):
     # first row of charts
-    if not second_row and n > 2:
+    if not second_row and n > 4:
         n = 2
     # second row of charts
     if second_row:
@@ -60,7 +61,7 @@ def main():
         with st.container():
             n = len(st.session_state.charts_array)
             try:
-                if n > 0 and n <= 2: # first row of charts                    
+                if n > 0 and n <= 4: # first row of charts                    
                     chart_row(n)
                 if n > 2: # second row of charts
                     chart_row(n)
