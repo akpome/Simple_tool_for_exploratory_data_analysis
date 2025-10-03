@@ -435,9 +435,42 @@ def main():
 
     tab1, tab2, tab3, tab4 = st.tabs(
         ['Ingest Data', 'Transform Data', 'Data Table', 'Create Charts'])
+    
     # data ingest tab
-    with tab1:
-        if not st.session_state.downloaded and not st.session_state.uploaded:
+    with tab1:         
+        if st.session_state.downloaded or st.session_state.uploaded:
+            # get column data types
+            numeric_cols = st.session_state.df.select_dtypes(
+                include=[np.number]).columns
+            string_cols = st.session_state.df.select_dtypes(
+                include='object').columns
+            datetime_cols = st.session_state.df.select_dtypes(
+                include='datetime64').columns
+
+            metadata_df = get_column_metadata(
+                st.session_state.df, numeric_cols, string_cols)
+
+            if st.session_state.downloaded or st.session_state.uploaded:
+                with st.container(horizontal=True, horizontal_alignment='right'):
+                    if st.button('Clear data'):
+                        init_state()
+                        st.rerun()
+
+            if not st.session_state.df.empty:
+                st.write(f'Row Count: {st.session_state.row_count}')
+                st.write(f'Column Count: {st.session_state.column_count}')
+                st.dataframe(
+                    metadata_df,
+                    column_config={
+                        col: st.column_config.Column(
+                            col,
+                            help=f'Statistics for {col}',
+                            width='medium'
+                        ) for col in metadata_df.columns
+                    }
+                )
+                
+        else:
             # upload widget container
             with st.container(border=True):
                 try:
@@ -463,37 +496,6 @@ def main():
                                 'CSV', 'PARQUET', 'EXCEL'], key='file_type')
                 if st.button('Import file') and validators.url(url_input):
                     download_file()
-                    
-        # get column data types
-        numeric_cols = st.session_state.df.select_dtypes(
-            include=[np.number]).columns
-        string_cols = st.session_state.df.select_dtypes(
-            include='object').columns
-        datetime_cols = st.session_state.df.select_dtypes(
-            include='datetime64').columns
-
-        metadata_df = get_column_metadata(
-            st.session_state.df, numeric_cols, string_cols)
-
-        if st.session_state.downloaded or st.session_state.uploaded:
-            with st.container(horizontal=True, horizontal_alignment='right'):
-                if st.button('Clear data'):
-                    init_state()
-                    st.rerun()
-
-        if not st.session_state.df.empty:
-            st.write(f'Row Count: {st.session_state.row_count}')
-            st.write(f'Column Count: {st.session_state.column_count}')
-            st.dataframe(
-                metadata_df,
-                column_config={
-                    col: st.column_config.Column(
-                        col,
-                        help=f'Statistics for {col}',
-                        width='medium'
-                    ) for col in metadata_df.columns
-                }
-            )
 
     # transform data tab
     with tab2:
