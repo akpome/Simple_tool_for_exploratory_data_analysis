@@ -20,6 +20,5 @@ Simple app to conduct data analysis.
 14. If the the initial data processing is sufficient, just click on the Create Charts tab, click on Chart 0 expander and then click on Add Chart.
 15. To view the transformed data at any time, click on Data Table tab.
 16. A maximum of four charts can be created on the dashboard.
-17. The dashboard is printagle.
 
 #### This is an on-going project
