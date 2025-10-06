@@ -16,7 +16,7 @@ import re
 import sys
 from pathlib import Path
 
-# import statics from parent directory
+# required to import statics from parent directory
 dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))
 
@@ -121,7 +121,6 @@ def on_selection_change(col):  # function for table and column transformation
         case Options.trt:
             st.session_state.df = st.session_state.df.T
         case Options.cdc:
-            st.success('got to match case')
             if 'NewDate' not in st.session_state.df.columns:
                 if st.session_state.df[col].dtype == 'object':
                     st.session_state.df['NewDate'] = pd.to_datetime(
@@ -626,7 +625,7 @@ def main():
                                      on_change=on_chart_selection_change,
                                      args=[f'x-axis {i}'])
 
-                        if chart and f'x-a               xis {i}' in chart:
+                        if chart and f'x-axis {i}' in chart:
                             st.success(chart[f'x-axis {i}'])
 
                         st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
