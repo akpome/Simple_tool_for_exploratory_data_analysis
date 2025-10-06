@@ -17,7 +17,7 @@ Simple app to conduct data analysis.
 11. Then click on Home on the sidebar.
 12. Upload or import another file if required and cycle through the process again.
 13. Should you want to use the same data, click on Transform Data tab and select Clear All Transforms under the Table Transform dropdown list.
-14. If the the initial data processing is sufficient, just click on the Create Charts tab, click on Chart 0 expander and then click on Add Chart.
+14. If the the initial data processing is sufficient, just click on the Create Charts tab, click on Chart 1 expander and then click on Add Chart.
 15. To view the transformed data at any time, click on Data Table tab.
 16. A maximum of four charts can be created on the dashboard.
 
