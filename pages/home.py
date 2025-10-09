@@ -293,7 +293,7 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
         st.stop()
 
     if file_ext == '.csv':
-        st.session_state.dataframe = pd.read_csv(loaded_file, encoding='utf-8')
+        st.session_state.dataframe = pd.read_csv(loaded_file)
     elif file_ext == '.parquet':
         st.session_state.dataframe = pd.read_parquet(loaded_file)
     elif file_ext in ['.xlsx', '.xls']:
@@ -325,7 +325,7 @@ def download_file():  # download from cloud storage
         match selection:
             case 'csv':
                 st.session_state.dataframe = pd.read_csv(
-                    io.StringIO(response.content.decode('utf-8')), encoding='utf-8')
+                    io.StringIO(response.content.decode('utf-8')))
             case 'parquet':
                 st.session_state.dataframe = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
