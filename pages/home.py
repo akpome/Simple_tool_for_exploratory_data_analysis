@@ -293,7 +293,7 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
         st.stop()
 
     if file_ext == '.csv':
-        st.session_state.dataframe = pd.read_csv(loaded_file)
+        st.session_state.dataframe = pd.read_csv(loaded_file, sep=',')
     elif file_ext == '.parquet':
         st.session_state.dataframe = pd.read_parquet(loaded_file)
     elif file_ext in ['.xlsx', '.xls']:
