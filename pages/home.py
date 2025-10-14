@@ -528,42 +528,42 @@ def main():
                     ) for col in metadata_df.columns
                 }
             )
-        elif st.session_state.query_warehouse:
-            if st.session_state.dw == 'BigQuery':
-                with st.container(border=True):
-                    if st.session_state.schema_df.empty:
-                        project_id = st.text_input(
-                            'Enter project id:*', key='proj_id').lower().strip()
-                        dataset_id = st.text_input(
-                            'Enter dataset id:*', key='dat_id').lower().strip()
-                        table_id = st.text_input(
-                            'Enter table id:*', key='tab_id').lower().strip()
-                        with st.container(horizontal=True):
-                            if project_id and dataset_id and table_id:
-                                if st.button('Get schema'):
-                                    get_table_schema(project_id, dataset_id,table_id)
-                            if st.button('Cancel'):
-                                st.session_state.query_warehouse = False 
-                                st.rerun() 
-                    else: 
-                        with st.container():
-                            checkbox_selections_dict = {}
-                            st.write('Select colomn(s):')
-                            for idx, row in st.session_state.schema_df.iterrows():
-                                st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
-                                checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
+        # elif st.session_state.query_warehouse:
+        #     if st.session_state.dw == 'BigQuery':
+        #         with st.container(border=True):
+        #             if st.session_state.schema_df.empty:
+        #                 project_id = st.text_input(
+        #                     'Enter project id:*', key='proj_id').lower().strip()
+        #                 dataset_id = st.text_input(
+        #                     'Enter dataset id:*', key='dat_id').lower().strip()
+        #                 table_id = st.text_input(
+        #                     'Enter table id:*', key='tab_id').lower().strip()
+        #                 with st.container(horizontal=True):
+        #                     if project_id and dataset_id and table_id:
+        #                         if st.button('Get schema'):
+        #                             get_table_schema(project_id, dataset_id,table_id)
+        #                     if st.button('Cancel'):
+        #                         st.session_state.query_warehouse = False 
+        #                         st.rerun() 
+        #             else: 
+        #                 with st.container():
+        #                     checkbox_selections_dict = {}
+        #                     st.write('Select colomn(s):')
+        #                     for idx, row in st.session_state.schema_df.iterrows():
+        #                         st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
+        #                         checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
                                 
-                            n = 100  
-                            options = [i * n for i in range(1, n + 1)]
-                            st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
-                            with st.container(horizontal=True):
-                                if st.button('Get data'):
-                                    columns_array = [i for i, v in checkbox_selections_dict.items() if v]
-                                    get_table_data(columns_array)
-                                if st.button('Cancel'):
-                                    st.session_state.query_warehouse = False 
-                                    st.session_state.schema_df = pd.DataFrame()
-                                    st.rerun() 
+        #                     n = 100  
+        #                     options = [i * n for i in range(1, n + 1)]
+        #                     st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
+        #                     with st.container(horizontal=True):
+        #                         if st.button('Get data'):
+        #                             columns_array = [i for i, v in checkbox_selections_dict.items() if v]
+        #                             get_table_data(columns_array)
+        #                         if st.button('Cancel'):
+        #                             st.session_state.query_warehouse = False 
+        #                             st.session_state.schema_df = pd.DataFrame()
+        #                             st.rerun() 
                                
         else:
             # upload widget container
