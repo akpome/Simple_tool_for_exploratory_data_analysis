@@ -4,6 +4,8 @@ from statics import Agg_Funcs as Agg_Funcs
 from statics import Options as Options
 from statics import Colors as Colors
 from statics import Charts as Charts
+import pandas_gbq as pd_gbq
+import pydata_google_auth
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -301,7 +303,6 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
             loaded_file, engine='openpyxl')
 
     st.session_state.df = st.session_state.dataframe
-    st.session_state.uploaded = True
     st.rerun()
 
 
@@ -334,7 +335,6 @@ def download_file():  # download from cloud storage
                     io.BytesIO(response.content), engine='openpyxl')
         if not st.session_state.dataframe.empty:
             st.session_state.df = st.session_state.dataframe
-            st.session_state.downloaded = True
             st.rerun()
 
     except Exception as e:
@@ -370,8 +370,7 @@ datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.
 def init_state():
     st.session_state.dataframe = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
-    st.session_state.downloaded = False
-    st.session_state.uploaded = False
+    st.session_state.query_warehouse = False
 
 
 def render_chart(i, update=False):  # rendering charts of dashboard page
@@ -416,20 +415,76 @@ def match_axis_colors(i):  # match selected colors with y-axis
         if len(st.session_state[f'y-axis {i}']) != len(st.session_state[f'color {i}']):
             st.error('y-axis selections must be equal to selected colors')
             st.stop()
+    
+def set_warehouse():  
+    if st.session_state.data_warehouse is not '--':
+        st.session_state.dw = st.session_state.data_warehouse
+        st.session_state.query_warehouse = True
 
+def get_table_schema(project_id, dataset_id, table_id):
+    
+    st.session_state.project_id = project_id
+    st.session_state.dataset_id = dataset_id
+    st.session_state.table_id = table_id
 
+    query = f"""
+    SELECT
+        column_name,
+        data_type,
+        is_nullable
+    FROM
+        `{st.session_state.project_id}.{st.session_state.dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+    WHERE
+        table_name = '{st.session_state.table_id}'
+    ORDER BY
+        ordinal_position;
+    """
+    
+    SCOPES = [
+    'https://www.googleapis.com/auth/bigquery'
+    ]
+
+    st.session_state.credentials = pydata_google_auth.get_user_credentials(
+        SCOPES,
+        auth_local_webserver=True,
+        credentials_cache=pydata_google_auth.cache.NOOP,
+    )
+    
+    st.session_state.schema_df = pd_gbq.read_gbq(query, 
+                                                 project_id=st.session_state.project_id, 
+                                                 credentials=st.session_state.credentials)
+    st.rerun()
+    
+def get_table_data(arr):
+    
+    comma_sep_colnames =  ", ".join(arr)
+    
+    query = f"""
+                SELECT
+                    {comma_sep_colnames}
+                FROM
+                    `{st.session_state.project_id}.{st.session_state.dataset_id}.{st.session_state.table_id}`
+                LIMIT
+                    {st.session_state.no_of_rows};
+            """
+    st.session_state.dataframe = pd_gbq.read_gbq(query, 
+                                               project_id=st.session_state.project_id, 
+                                               credentials=st.session_state.credentials)    
+    st.session_state.df = st.session_state.dataframe
+    st.rerun()
+   
 def main():
 
     st.set_page_config(layout='wide')
 
     if 'df' not in st.session_state:
         st.session_state.df = pd.DataFrame()
-
-    if 'downloaded' not in st.session_state:
-        st.session_state.downloaded = False
-
-    if 'uploaded' not in st.session_state:
-        st.session_state.uploaded = False
+        
+    if 'schema_df' not in st.session_state:
+        st.session_state.schema_df = pd.DataFrame()
+    
+    if 'query_warehouse' not in st.session_state:
+        st.session_state.query_warehouse = False
 
     st.markdown('##### Simple tool for exploratory data analysis')
 
@@ -438,7 +493,7 @@ def main():
     
     # data ingest tab
     with tab1:         
-        if st.session_state.downloaded or st.session_state.uploaded:
+        if not st.session_state.df.empty:
             # get column data types
             numeric_cols = st.session_state.df.select_dtypes(
                 include=[np.number]).columns
@@ -450,26 +505,60 @@ def main():
             metadata_df = get_column_metadata(
                 st.session_state.df, numeric_cols, string_cols)
 
-            if st.session_state.downloaded or st.session_state.uploaded:
-                with st.container(horizontal=True, horizontal_alignment='right'):
-                    if st.button('Clear data'):
-                        init_state()
-                        st.rerun()
+            with st.container(horizontal=True, horizontal_alignment='right'):
+                if st.button('Clear data'):
+                    init_state()
+                    st.rerun()
 
-            if not st.session_state.df.empty:
-                st.write(f'Row Count: {st.session_state.row_count}')
-                st.write(f'Column Count: {st.session_state.column_count}')
-                st.dataframe(
-                    metadata_df,
-                    column_config={
-                        col: st.column_config.Column(
-                            col,
-                            help=f'Statistics for {col}',
-                            width='medium'
-                        ) for col in metadata_df.columns
-                    }
-                )
-                
+            st.write(f'Row Count: {st.session_state.row_count}')
+            st.write(f'Column Count: {st.session_state.column_count}')
+            st.dataframe(
+                metadata_df,
+                column_config={
+                    col: st.column_config.Column(
+                        col,
+                        help=f'Statistics for {col}',
+                        width='medium'
+                    ) for col in metadata_df.columns
+                }
+            )
+        elif st.session_state.query_warehouse:
+            if st.session_state.dw == 'BigQuery':
+                with st.container(border=True):
+                    if st.session_state.schema_df.empty:
+                        project_id = st.text_input(
+                            'Enter project id:*', key='proj_id').lower().strip()
+                        dataset_id = st.text_input(
+                            'Enter dataset id:*', key='dat_id').lower().strip()
+                        table_id = st.text_input(
+                            'Enter table id:*', key='tab_id').lower().strip()
+                        with st.container(horizontal=True):
+                            if project_id and dataset_id and table_id:
+                                if st.button('Get schema'):
+                                    get_table_schema(project_id, dataset_id,table_id)
+                            if st.button('Cancel'):
+                                st.session_state.query_warehouse = False 
+                                st.rerun() 
+                    else: 
+                        with st.container():
+                            checkbox_selections_dict = {}
+                            st.write('Select colomn(s):')
+                            for idx, row in st.session_state.schema_df.iterrows():
+                                st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
+                                checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
+                                
+                            n = 100  
+                            options = [i * n for i in range(1, n + 1)]
+                            st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
+                            with st.container(horizontal=True):
+                                if st.button('Get data'):
+                                    columns_array = [i for i, v in checkbox_selections_dict.items() if v]
+                                    get_table_data(columns_array)
+                                if st.button('Cancel'):
+                                    st.session_state.query_warehouse = False 
+                                    st.session_state.schema_df = pd.DataFrame()
+                                    st.rerun() 
+                               
         else:
             # upload widget container
             with st.container(border=True):
@@ -488,7 +577,7 @@ def main():
                 except Exception as e:
                     st.error('File upload error')
 
-            # import container
+            # import file container
             with st.container(border=True):
                 url_input = st.text_input(
                     'Enter file url:', key='url').lower().strip()
@@ -496,6 +585,14 @@ def main():
                                 'CSV', 'PARQUET', 'EXCEL'], key='file_type')
                 if st.button('Import file') and validators.url(url_input):
                     download_file()
+                    
+            # import warehouse container
+            with st.container(border=True):
+                st.selectbox(f'Select data warehouse:', options=[
+                                '--','BigQuery'], 
+                                on_change = set_warehouse, 
+                                key='data_warehouse')
+                
 
     # transform data tab
     with tab2:
