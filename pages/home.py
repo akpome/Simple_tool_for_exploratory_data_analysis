@@ -446,6 +446,7 @@ def get_table_schema(project_id, dataset_id, table_id):
 
     st.session_state.credentials = pydata_google_auth.get_user_credentials(
         SCOPES,
+        auth_local_webserver=True,
         credentials_cache=pydata_google_auth.cache.NOOP,
     )
     try:
