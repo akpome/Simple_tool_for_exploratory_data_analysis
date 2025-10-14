@@ -593,12 +593,12 @@ def main():
                 if st.button('Import file') and validators.url(url_input):
                     download_file()
                     
-            # import warehouse container
-            with st.container(border=True):
-                st.selectbox(f'Select data warehouse:', options=[
-                                '--','BigQuery'], 
-                                on_change = set_warehouse, 
-                                key='data_warehouse')
+            # # import warehouse container
+            # with st.container(border=True):
+            #     st.selectbox(f'Select data warehouse:', options=[
+            #                     '--','BigQuery'], 
+            #                     on_change = set_warehouse, 
+            #                     key='data_warehouse')
                 
 
     # transform data tab
