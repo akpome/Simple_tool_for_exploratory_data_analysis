@@ -449,10 +449,13 @@ def get_table_schema(project_id, dataset_id, table_id):
         auth_local_webserver=True,
         credentials_cache=pydata_google_auth.cache.NOOP,
     )
-    
-    st.session_state.schema_df = pd_gbq.read_gbq(query, 
-                                                 project_id=st.session_state.project_id, 
-                                                 credentials=st.session_state.credentials)
+    try:
+        st.session_state.schema_df = pd_gbq.read_gbq(query, 
+                                                    project_id=st.session_state.project_id, 
+                                                    credentials=st.session_state.credentials)
+    except Exception as e:
+        st.error('Error quering BigQuery. Please contact your BigQuery Admin')
+        
     st.rerun()
     
 def get_table_data(arr):
@@ -467,10 +470,14 @@ def get_table_data(arr):
                 LIMIT
                     {st.session_state.no_of_rows};
             """
-    st.session_state.dataframe = pd_gbq.read_gbq(query, 
-                                               project_id=st.session_state.project_id, 
-                                               credentials=st.session_state.credentials)    
-    st.session_state.df = st.session_state.dataframe
+    try:
+        st.session_state.dataframe = pd_gbq.read_gbq(query, 
+                                                project_id=st.session_state.project_id, 
+                                                credentials=st.session_state.credentials)    
+        st.session_state.df = st.session_state.dataframe
+    except Exception as e:
+        st.error('Error quering BigQuery. Please contact your BigQuery Admin')
+        
     st.rerun()
    
 def main():
