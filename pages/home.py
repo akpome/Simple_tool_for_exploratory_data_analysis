@@ -428,10 +428,10 @@ credentials = service_account.Credentials.from_service_account_info(
 )
 client = bigquery.Client(credentials=credentials)
 
-def get_table_schema(proj_db_id,  dset_sch_id, table_id):
+def get_table_schema(wh_input_01,  wh_input_02, table_id):
        
-    st.session_state.proj_db_id = proj_db_id
-    st.session_state.dset_sch_id = dset_sch_id
+    st.session_state.wh_input_01 = wh_input_01 # project or dataset id
+    st.session_state.wh_input_02 = wh_input_02 # dataset or schema id
     st.session_state.table_id = table_id
     
     if st.session_state.dw == 'BigQuery':
@@ -441,7 +441,7 @@ def get_table_schema(proj_db_id,  dset_sch_id, table_id):
                         data_type,
                         is_nullable
                     FROM
-                        `{st.session_state.proj_db_id}.{st.session_state.dset_sch_id}.INFORMATION_SCHEMA.COLUMNS`
+                        `{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.INFORMATION_SCHEMA.COLUMNS`
                     WHERE
                         table_name = '{st.session_state.table_id}'
                     ORDER BY
@@ -454,9 +454,9 @@ def get_table_schema(proj_db_id,  dset_sch_id, table_id):
                         data_type,
                         is_nullable
                     FROM
-                        {st.session_state.proj_db_id}.INFORMATION_SCHEMA.COLUMNS
+                        {st.session_state.wh_input_01}.INFORMATION_SCHEMA.COLUMNS
                     WHERE
-                        TABLE_SCHEMA = '{st.session_state.dset_sch_id.upper()}' AND TABLE_NAME = '{st.session_state.table_id.upper()}'
+                        TABLE_SCHEMA = '{st.session_state.wh_input_02.upper()}' AND TABLE_NAME = '{st.session_state.table_id.upper()}'
                     ORDER BY
                         ordinal_position;
                 """
@@ -474,7 +474,7 @@ def get_table_data(arr):
                     SELECT
                         {comma_sep_colnames}
                     FROM
-                        `{st.session_state.proj_db_id}.{st.session_state.dset_sch_id}.{st.session_state.table_id}`
+                        `{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}`
                     LIMIT
                         {st.session_state.no_of_rows};
                 """
@@ -483,7 +483,7 @@ def get_table_data(arr):
                     SELECT
                         {comma_sep_colnames}
                     FROM
-                        {st.session_state.proj_db_id}.{st.session_state.dset_sch_id}.{st.session_state.table_id}
+                        {st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}
                     LIMIT
                         {st.session_state.no_of_rows};
                 """
@@ -567,13 +567,15 @@ def main():
                 
             with st.container(border=True):
                 if st.session_state.schema_df.empty:
-                    proj_db_id = st.text_input(label1).lower().strip()
-                    dset_sch_id = st.text_input(label2).lower().strip()
+                    wh_input_01 = st.text_input(label1).lower().strip()
+                    wh_input_02 = st.text_input(label2).lower().strip()
                     table_id = st.text_input(label3).lower().strip()
                     with st.container(horizontal=True):
-                        if proj_db_id and dset_sch_id and table_id:
-                            if st.button('Get schema'):
-                                get_table_schema(proj_db_id,  dset_sch_id, table_id)
+                        if st.button('Get schema'):
+                            if wh_input_01 and wh_input_02 and table_id:
+                                get_table_schema(wh_input_01,  wh_input_02, table_id)
+                            else:
+                                st.error('Missing input(s)')
                         if st.button('Cancel'):
                             st.session_state.query_warehouse = False 
                             st.rerun() 
