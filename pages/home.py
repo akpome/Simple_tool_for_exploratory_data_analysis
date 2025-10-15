@@ -369,6 +369,7 @@ datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.
 
 def init_state():
     st.session_state.dataframe = pd.DataFrame()
+    st.session_state.schema_df = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
     st.session_state.query_warehouse = False
 
