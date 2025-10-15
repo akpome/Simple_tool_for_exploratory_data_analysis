@@ -20,5 +20,26 @@ Simple app to conduct data analysis.
 14. If the the initial data processing is sufficient, just click on the Create Charts tab, click on Chart 1 expander and then click on Add Chart.
 15. To view the transformed data at any time, click on Data Table tab.
 16. A maximum of four charts can be created on the dashboard.
+17. To ingest data from BiqQuery and Snowflake you must fork this code and create .streamlit/secrets.toml file in the root directory.
+18. Paste the code below in the file with the appropriate parameters from your cloud service provider. 
+  
+[connections.snowflake]
+account = "your_snowflake_account_identifier"
+user = "your_snowflake_username"
+password = "your_snowflake_password"
+warehouse = "your_snowflake_warehouse"
+
+[gcp_service_account]
+type = "service_account"
+project_id = "xxx"
+private_key_id = "xxx"
+private_key = "xxx"
+client_email = "xxx"
+client_id = "xxx"
+auth_uri = "https://accounts.google.com/o/oauth2/auth"
+token_uri = "https://oauth2.googleapis.com/token"
+auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
+client_x509_cert_url = "xxx"
+
 
 #### This is an on-going project
