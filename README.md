@@ -23,7 +23,7 @@ Simple app to conduct data analysis.
 17. To ingest data from BiqQuery and Snowflake you must fork this code and create .streamlit/secrets.toml file in the root directory.
 18. Paste the code below in the file with the appropriate parameters from your cloud service provider. 
   
-'''[connections.snowflake]
+```[connections.snowflake]
 account = "your_snowflake_account_identifier"
 user = "your_snowflake_username"
 password = "your_snowflake_password"
@@ -39,7 +39,7 @@ client_id = "xxx"
 auth_uri = "https://accounts.google.com/o/oauth2/auth"
 token_uri = "https://oauth2.googleapis.com/token"
 auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
-client_x509_cert_url = "xxx"'''
+client_x509_cert_url = "xxx"```
 
 
 #### This is an on-going project
