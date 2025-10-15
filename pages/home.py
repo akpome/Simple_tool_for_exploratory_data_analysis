@@ -492,7 +492,7 @@ def get_table_data(arr):
     
     st.rerun()
 
-# @st.cache_data
+@st.cache_data
 def run_query(query):
     try:
         if st.session_state.dw == 'BigQuery':
@@ -581,7 +581,7 @@ def main():
                         checkbox_selections_dict = {}
                         st.write('Select colomn(s):')
                         for idx, row in st.session_state.schema_df.iterrows():
-                            st.checkbox(f'{row["COLUMN_NAME"]} {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
+                            st.checkbox(f'{row["COLUMN_NAME"]}   {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
                             checkbox_selections_dict[row["COLUMN_NAME"]] = st.session_state[f'{row}_{idx}']
                             
                         n = 1000  
