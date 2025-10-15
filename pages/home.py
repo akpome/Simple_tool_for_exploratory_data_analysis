@@ -4,8 +4,6 @@ from statics import Agg_Funcs as Agg_Funcs
 from statics import Options as Options
 from statics import Colors as Colors
 from statics import Charts as Charts
-import pandas_gbq as pd_gbq
-import pydata_google_auth
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -17,11 +15,12 @@ import io
 import re
 import sys
 from pathlib import Path
+from google.oauth2 import service_account
+from google.cloud import bigquery
 
 # required to import statics from parent directory
 dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))
-
 
 # create columns metadata and statistics
 def get_column_metadata(df, ncols, scols):
@@ -421,10 +420,16 @@ def set_warehouse():
         st.session_state.dw = st.session_state.data_warehouse
         st.session_state.query_warehouse = True
 
-def get_table_schema(project_id, dataset_id, table_id):
-    
-    st.session_state.project_id = project_id
-    st.session_state.dataset_id = dataset_id
+# Create BigQuery API client.
+credentials = service_account.Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"]
+)
+client = bigquery.Client(credentials=credentials)
+
+def get_table_schema(proj_db_id,  dset_sch_id, table_id):
+       
+    st.session_state.proj_db_id = proj_db_id
+    st.session_state.dset_schema_id = dset_sch_id
     st.session_state.table_id = table_id
 
     query = f"""
@@ -433,28 +438,14 @@ def get_table_schema(project_id, dataset_id, table_id):
         data_type,
         is_nullable
     FROM
-        `{st.session_state.project_id}.{st.session_state.dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+        `{st.session_state.proj_db_id}.{st.session_state.dset_schema_id}.INFORMATION_SCHEMA.COLUMNS`
     WHERE
         table_name = '{st.session_state.table_id}'
     ORDER BY
         ordinal_position;
     """
     
-    SCOPES = [
-    'https://www.googleapis.com/auth/bigquery'
-    ]
-
-    st.session_state.credentials = pydata_google_auth.get_user_credentials(
-        SCOPES,
-        auth_local_webserver=True,
-        credentials_cache=pydata_google_auth.cache.NOOP,
-    )
-    try:
-        st.session_state.schema_df = pd_gbq.read_gbq(query, 
-                                                    project_id=st.session_state.project_id, 
-                                                    credentials=st.session_state.credentials)
-    except Exception as e:
-        st.error('Error quering BigQuery. Please contact your BigQuery Admin')
+    st.session_state.schema_df = run_query(query)
         
     st.rerun()
     
@@ -466,20 +457,27 @@ def get_table_data(arr):
                 SELECT
                     {comma_sep_colnames}
                 FROM
-                    `{st.session_state.project_id}.{st.session_state.dataset_id}.{st.session_state.table_id}`
+                    `{st.session_state.proj_db_id}.{st.session_state.dset_schema_id}.{st.session_state.table_id}`
                 LIMIT
                     {st.session_state.no_of_rows};
             """
-    try:
-        st.session_state.dataframe = pd_gbq.read_gbq(query, 
-                                                project_id=st.session_state.project_id, 
-                                                credentials=st.session_state.credentials)    
-        st.session_state.df = st.session_state.dataframe
-    except Exception as e:
-        st.error('Error quering BigQuery. Please contact your BigQuery Admin')
-        
+    st.session_state.dataframe = run_query(query)
+    st.session_state.df = st.session_state.dataframe
+    
     st.rerun()
-   
+
+@st.cache_data
+def run_query(query):
+    try:
+        if st.session_state.dw == 'BigQuery':
+            query_job = client.query(query)
+            return query_job.to_dataframe()   
+        elif st.session_state.dw == 'Snowflake':
+            conn = st.connection("snowflake")
+            return conn.query(query) 
+    except Exception as e:
+        st.error('Connection error.')
+
 def main():
 
     st.set_page_config(layout='wide')
@@ -529,43 +527,51 @@ def main():
                     ) for col in metadata_df.columns
                 }
             )
-        # elif st.session_state.query_warehouse:
-        #     if st.session_state.dw == 'BigQuery':
-        #         with st.container(border=True):
-        #             if st.session_state.schema_df.empty:
-        #                 project_id = st.text_input(
-        #                     'Enter project id:*', key='proj_id').lower().strip()
-        #                 dataset_id = st.text_input(
-        #                     'Enter dataset id:*', key='dat_id').lower().strip()
-        #                 table_id = st.text_input(
-        #                     'Enter table id:*', key='tab_id').lower().strip()
-        #                 with st.container(horizontal=True):
-        #                     if project_id and dataset_id and table_id:
-        #                         if st.button('Get schema'):
-        #                             get_table_schema(project_id, dataset_id,table_id)
-        #                     if st.button('Cancel'):
-        #                         st.session_state.query_warehouse = False 
-        #                         st.rerun() 
-        #             else: 
-        #                 with st.container():
-        #                     checkbox_selections_dict = {}
-        #                     st.write('Select colomn(s):')
-        #                     for idx, row in st.session_state.schema_df.iterrows():
-        #                         st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
-        #                         checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
-                                
-        #                     n = 100  
-        #                     options = [i * n for i in range(1, n + 1)]
-        #                     st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
-        #                     with st.container(horizontal=True):
-        #                         if st.button('Get data'):
-        #                             columns_array = [i for i, v in checkbox_selections_dict.items() if v]
-        #                             get_table_data(columns_array)
-        #                         if st.button('Cancel'):
-        #                             st.session_state.query_warehouse = False 
-        #                             st.session_state.schema_df = pd.DataFrame()
-        #                             st.rerun() 
-                               
+        elif st.session_state.query_warehouse:
+            if st.session_state.dw == 'BigQuery':
+                label1 = 'Enter project id:*'
+                label2 = 'Enter dataset id:*'
+                label3 = 'Enter table id:*'
+            elif st.session_state.dw == 'Snowflake':
+                label1 = 'Enter database id:*'
+                label2 = 'Enter schema id:*'
+                label3 = 'Enter table id:*'
+                
+            with st.container(border=True):
+                if st.session_state.schema_df.empty:
+                    proj_db_id = st.text_input(
+                        label1).lower().strip()
+                    dset_sch_id = st.text_input(
+                        label2).lower().strip()
+                    table_id = st.text_input(
+                        label3).lower().strip()
+                    with st.container(horizontal=True):
+                        if proj_db_id and dset_sch_id and table_id:
+                            if st.button('Get schema'):
+                                get_table_schema(proj_db_id,  dset_sch_id, table_id)
+                        if st.button('Cancel'):
+                            st.session_state.query_warehouse = False 
+                            st.rerun() 
+                else: 
+                    with st.container():
+                        checkbox_selections_dict = {}
+                        st.write('Select colomn(s):')
+                        for idx, row in st.session_state.schema_df.iterrows():
+                            st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
+                            checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
+                            
+                        n = 100  
+                        options = [i * n for i in range(1, n + 1)]
+                        st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
+                        with st.container(horizontal=True):
+                            if st.button('Get data'):
+                                columns_array = [i for i, v in checkbox_selections_dict.items() if v]
+                                get_table_data(columns_array)
+                            if st.button('Cancel'):
+                                st.session_state.query_warehouse = False 
+                                st.session_state.schema_df = pd.DataFrame()
+                                st.rerun() 
+                    
         else:
             # upload widget container
             with st.container(border=True):
@@ -593,12 +599,12 @@ def main():
                 if st.button('Import file') and validators.url(url_input):
                     download_file()
                     
-            # # import warehouse container
-            # with st.container(border=True):
-            #     st.selectbox(f'Select data warehouse:', options=[
-            #                     '--','BigQuery'], 
-            #                     on_change = set_warehouse, 
-            #                     key='data_warehouse')
+            # import warehouse container
+            with st.container(border=True):
+                st.selectbox(f'Select data warehouse:', options=[
+                                '--','BigQuery', 'Snowflake'], 
+                                on_change = set_warehouse, 
+                                key='data_warehouse')
                 
 
     # transform data tab
