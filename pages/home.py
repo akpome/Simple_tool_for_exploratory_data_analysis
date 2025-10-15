@@ -197,6 +197,7 @@ def numeric_date_conversion(col, msg):
             st.rerun()
         except Exception as e:
             st.error('Invalid input')
+            st.stop()
 
 
 @st.dialog(' ')
@@ -338,7 +339,7 @@ def download_file():  # download from cloud storage
 
     except Exception as e:
         st.error('Error importing file or invallid file format')
-
+        st.stop()
 
 def on_chart_selection_change(settings):  # selection of chart type
     h, i = settings.split()
@@ -429,21 +430,35 @@ client = bigquery.Client(credentials=credentials)
 def get_table_schema(proj_db_id,  dset_sch_id, table_id):
        
     st.session_state.proj_db_id = proj_db_id
-    st.session_state.dset_schema_id = dset_sch_id
+    st.session_state.dset_sch_id = dset_sch_id
     st.session_state.table_id = table_id
-
-    query = f"""
-    SELECT
-        column_name,
-        data_type,
-        is_nullable
-    FROM
-        `{st.session_state.proj_db_id}.{st.session_state.dset_schema_id}.INFORMATION_SCHEMA.COLUMNS`
-    WHERE
-        table_name = '{st.session_state.table_id}'
-    ORDER BY
-        ordinal_position;
-    """
+    
+    if st.session_state.dw == 'BigQuery':
+        query = f"""
+                    SELECT
+                        column_name,
+                        data_type,
+                        is_nullable
+                    FROM
+                        `{st.session_state.proj_db_id}.{st.session_state.dset_sch_id}.INFORMATION_SCHEMA.COLUMNS`
+                    WHERE
+                        table_name = '{st.session_state.table_id}'
+                    ORDER BY
+                        ordinal_position;
+                """
+    else:        
+        query = f"""
+                    SELECT
+                        column_name,
+                        data_type,
+                        is_nullable
+                    FROM
+                        {st.session_state.proj_db_id}.INFORMATION_SCHEMA.COLUMNS
+                    WHERE
+                        TABLE_SCHEMA = '{st.session_state.dset_sch_id.upper()}' AND TABLE_NAME = '{st.session_state.table_id.upper()}'
+                    ORDER BY
+                        ordinal_position;
+                """
     
     st.session_state.schema_df = run_query(query)
         
@@ -453,30 +468,42 @@ def get_table_data(arr):
     
     comma_sep_colnames =  ", ".join(arr)
     
-    query = f"""
-                SELECT
-                    {comma_sep_colnames}
-                FROM
-                    `{st.session_state.proj_db_id}.{st.session_state.dset_schema_id}.{st.session_state.table_id}`
-                LIMIT
-                    {st.session_state.no_of_rows};
-            """
+    if st.session_state.dw == 'BigQuery':
+        query = f"""
+                    SELECT
+                        {comma_sep_colnames}
+                    FROM
+                        `{st.session_state.proj_db_id}.{st.session_state.dset_sch_id}.{st.session_state.table_id}`
+                    LIMIT
+                        {st.session_state.no_of_rows};
+                """
+    else:
+        query = f"""
+                    SELECT
+                        {comma_sep_colnames}
+                    FROM
+                        {st.session_state.proj_db_id}.{st.session_state.dset_sch_id}.{st.session_state.table_id}
+                    LIMIT
+                        {st.session_state.no_of_rows};
+                """
+        
     st.session_state.dataframe = run_query(query)
     st.session_state.df = st.session_state.dataframe
     
     st.rerun()
 
-@st.cache_data
+# @st.cache_data
 def run_query(query):
     try:
         if st.session_state.dw == 'BigQuery':
-            query_job = client.query(query)
-            return query_job.to_dataframe()   
+            query = client.query(query)
+            return query.to_dataframe()   
         elif st.session_state.dw == 'Snowflake':
-            conn = st.connection("snowflake")
-            return conn.query(query) 
+            cxtn = st.connection("snowflake")
+            return cxtn.query(query) 
     except Exception as e:
         st.error('Connection error.')
+        st.stop()
 
 def main():
 
@@ -539,12 +566,9 @@ def main():
                 
             with st.container(border=True):
                 if st.session_state.schema_df.empty:
-                    proj_db_id = st.text_input(
-                        label1).lower().strip()
-                    dset_sch_id = st.text_input(
-                        label2).lower().strip()
-                    table_id = st.text_input(
-                        label3).lower().strip()
+                    proj_db_id = st.text_input(label1).lower().strip()
+                    dset_sch_id = st.text_input(label2).lower().strip()
+                    table_id = st.text_input(label3).lower().strip()
                     with st.container(horizontal=True):
                         if proj_db_id and dset_sch_id and table_id:
                             if st.button('Get schema'):
@@ -557,10 +581,10 @@ def main():
                         checkbox_selections_dict = {}
                         st.write('Select colomn(s):')
                         for idx, row in st.session_state.schema_df.iterrows():
-                            st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
-                            checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
+                            st.checkbox(f'{row["COLUMN_NAME"]} {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
+                            checkbox_selections_dict[row["COLUMN_NAME"]] = st.session_state[f'{row}_{idx}']
                             
-                        n = 100  
+                        n = 1000  
                         options = [i * n for i in range(1, n + 1)]
                         st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
                         with st.container(horizontal=True):
@@ -589,6 +613,7 @@ def main():
                         
                 except Exception as e:
                     st.error('File upload error')
+                    st.stop()
 
             # import file container
             with st.container(border=True):
