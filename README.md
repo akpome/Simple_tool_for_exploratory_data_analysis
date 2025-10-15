@@ -20,8 +20,9 @@ Simple app to conduct data analysis.
 14. If the the initial data processing is sufficient, just click on the Create Charts tab, click on Chart 1 expander and then click on Add Chart.
 15. To view the transformed data at any time, click on Data Table tab.
 16. A maximum of four charts can be created on the dashboard.
-17. To ingest data from BiqQuery and Snowflake you must fork this code and create .streamlit/secrets.toml file in the root directory.
-18. Paste the code below in the file with the appropriate parameters from your cloud service provider. 
+17. To ingest data from BiqQuery and Snowflake on your local machine, you must fork this code and create .streamlit/secrets.toml file in the root directory.
+18. Paste the code below in the file with the appropriate parameters from your cloud service provider.
+19. If you want to deploy the app on Streamlit, please follow this https://docs.streamlit.io/develop/tutorials/databases/bigquery and https://docs.streamlit.io/develop/tutorials/databases/snowflake
   
 ```
 [connections.snowflake]
