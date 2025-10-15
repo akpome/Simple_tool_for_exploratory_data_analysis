@@ -585,11 +585,11 @@ def main():
                         st.write('Select colomn(s):')
                         if st.session_state.dw == 'BigQuery':
                             for idx, row in st.session_state.schema_df.iterrows():
-                                st.checkbox(f'{row["column_name"]}   {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
+                                st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
                                 checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
                         else:
                             for idx, row in st.session_state.schema_df.iterrows():
-                                st.checkbox(f'{row["COLUMN_NAME"]}   {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
+                                st.checkbox(f'{row["COLUMN_NAME"]} {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
                                 checkbox_selections_dict[row["COLUMN_NAME"]] = st.session_state[f'{row}_{idx}']
                                 
                         n = 1000  
