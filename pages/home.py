@@ -14,7 +14,6 @@ import os
 import io
 import re
 import sys
-import duckdb
 from pathlib import Path
 from google.oauth2 import service_account
 from google.cloud import bigquery
@@ -88,9 +87,7 @@ def on_selection_change(col):  # function for table and column transformation
         case Options.spc:
             dialog(col, 'split', f'Split {col}', 'Enter delimiter:')
         case Options.cat:
-            cxtn = get_duckdb_connection()
-            st.session_state.df = cxtn.execute("SELECT * FROM duckdb_table").df()
-            cxtn.close()
+            st.session_state.df = st.session_state.dataframe
         case Options.pvt:
             pivot_dialog()
         case Options.sfh:
@@ -287,7 +284,6 @@ def dialog(col, kind, msg, prompt):  # to rename or split column
                             dialog_input, expand=True)
                         st.rerun()
 
-st.session_state.duckdb_cxtn = duckdb.connect(database=':memory:', read_only=False)
 
 def load_dataframe(loaded_file, file_ext):  # load uploaded file
 
@@ -298,21 +294,15 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
             f'Invalid file type: {file_ext}. Please upload a .csv, .parquet or Excel file (.xlsx or .xls).')
         st.stop()
 
-    cxtn = get_duckdb_connection()
     if file_ext == '.csv':
-        st.session_state.df = pd.read_csv(loaded_file)        
-        cxtn.execute("DROP TABLE IF EXISTS duckdb_table;")
-        cxtn.register("duckdb_table", st.session_state.df)
+        st.session_state.dataframe = pd.read_csv(loaded_file)
     elif file_ext == '.parquet':
-        st.session_state.df = pd.read_parquet(loaded_file)        
-        cxtn.execute("DROP TABLE IF EXISTS duckdb_table;")
-        cxtn.register("duckdb_table", st.session_state.df)
+        st.session_state.dataframe = pd.read_parquet(loaded_file)
     elif file_ext in ['.xlsx', '.xls']:
-        st.session_state.df = pd.read_excel(loaded_file, engine='openpyxl')  
-        cxtn.execute("DROP TABLE IF EXISTS duckdb_table;")
-        cxtn.register("duckdb_table", st.session_state.df)
-    cxtn.close()
+        st.session_state.dataframe = pd.read_excel(
+            loaded_file, engine='openpyxl')
 
+    st.session_state.df = st.session_state.dataframe
     st.rerun()
 
 
@@ -333,24 +323,18 @@ def download_file():  # download from cloud storage
     try:
         response = requests.get(url)
         response.raise_for_status()
-        df = pd.DataFrame()
-        cxtn = get_duckdb_connection()
         match selection:
             case 'csv':
-                df = pd.read_csv(io.StringIO(response.content.decode('utf-8')))
-                cxtn.execute("DROP TABLE IF EXISTS duckdb_table;")
-                cxtn.register("duckdb_table", df)
-            case 'parquet':                
-                df = pd.read_parquet(io.StringIO(response.content.decode('utf-8')))
-                cxtn.execute("DROP TABLE IF EXISTS duckdb_table;")
-                cxtn.register("duckdb_table", df)
-            case 'excel':            
-                df = pd.read_excel(io.BytesIO(response.content), engine='openpyxl')
-                cxtn.execute("DROP TABLE IF EXISTS duckdb_table;")
-                cxtn.register("duckdb_table", df)
-        cxtn.close()
-        if not df.empty:
-            st.session_state.df = df
+                st.session_state.dataframe = pd.read_csv(
+                    io.StringIO(response.content.decode('utf-8')))
+            case 'parquet':
+                st.session_state.dataframe = pd.read_parquet(
+                    io.StringIO(response.content.decode('utf-8')))
+            case 'excel':
+                st.session_state.dataframe = pd.read_excel(
+                    io.BytesIO(response.content), engine='openpyxl')
+        if not st.session_state.dataframe.empty:
+            st.session_state.df = st.session_state.dataframe
             st.rerun()
 
     except Exception as e:
@@ -384,6 +368,7 @@ datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.
 
 
 def init_state():
+    st.session_state.dataframe = pd.DataFrame()
     st.session_state.schema_df = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
     st.session_state.query_warehouse = False
@@ -442,11 +427,6 @@ credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
 client = bigquery.Client(credentials=credentials)
-
-# create duckdb database in memory
-@st.cache_resource
-def get_duckdb_connection():
-    return duckdb.connect(database=':memory:', read_only=False)
 
 def get_table_schema(wh_input_01,  wh_input_02, table_id):
        
@@ -507,11 +487,9 @@ def get_table_data(arr):
                     LIMIT
                         {st.session_state.no_of_rows};
                 """
-    st.session_state.df = run_query(query)
-    cxtn = get_duckdb_connection()
-    cxtn.execute("DROP TABLE IF EXISTS duckdb_table;")
-    cxtn.register("duckdb_table", st.session_state.df)
-    cxtn.close()
+        
+    st.session_state.dataframe = run_query(query)
+    st.session_state.df = st.session_state.dataframe
     
     st.rerun()
 
