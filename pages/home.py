@@ -320,7 +320,7 @@ def download_file():  # download from cloud storage
     if '1drv.ms' in url:
         url = f'{url}&download=1'
     # Download the file
-    try:
+    # try:
         response = requests.get(url)
         response.raise_for_status()
         match selection:
@@ -337,9 +337,9 @@ def download_file():  # download from cloud storage
             st.session_state.df = st.session_state.dataframe
             st.rerun()
 
-    except Exception as e:
-        st.error('Error importing file or invallid file format')
-        st.stop()
+    # except Exception as e:
+    #     st.error('Error importing file or invallid file format')
+    #     st.stop()
 
 def on_chart_selection_change(settings):  # selection of chart type
     h, i = settings.split()
