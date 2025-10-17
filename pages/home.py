@@ -287,8 +287,6 @@ def dialog(col, kind, msg, prompt):  # to rename or split column
 
 def load_dataframe(loaded_file, file_ext):  # load uploaded file
 
-    file_ext = file_ext
-
     if file_ext not in ['.xlsx', 'xls', '.parquet', '.csv']:
         st.error(
             f'Invalid file type: {file_ext}. Please upload a .csv, .parquet or Excel file (.xlsx or .xls).')
