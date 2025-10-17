@@ -336,7 +336,7 @@ def download_file():  # download from cloud storage
             st.rerun()
 
     except Exception as e:
-        st.error('Error importing file or invallid file format')
+        st.error(e)
         st.stop()
 
 def on_chart_selection_change(settings):  # selection of chart type
