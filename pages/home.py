@@ -324,7 +324,7 @@ def download_file():  # download from cloud storage
         match selection:
             case 'csv':
                 st.session_state.dataframe = pd.read_csv(
-                    io.BytesIO(response.content))
+                    io.StringIO(response.content.decode('utf-8')))
             case 'parquet':
                 st.session_state.dataframe = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
@@ -336,7 +336,7 @@ def download_file():  # download from cloud storage
             st.rerun()
 
     except Exception as e:
-        st.error(e)
+        st.error('Error importing file or invallid file format')
         st.stop()
 
 def on_chart_selection_change(settings):  # selection of chart type
