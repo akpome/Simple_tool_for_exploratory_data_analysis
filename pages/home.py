@@ -324,7 +324,7 @@ def download_file():  # download from cloud storage
         match selection:
             case 'csv':
                 st.session_state.dataframe = pd.read_csv(
-                    io.StringIO(response.content.decode('utf-8')))
+                    io.StringIO(response.content.decode('utf-8')), on_bad_lines='skip')
             case 'parquet':
                 st.session_state.dataframe = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
