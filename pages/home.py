@@ -77,6 +77,7 @@ def get_column_metadata(df, ncols, scols):
 
     return metadata_df
 
+# initialize in-memory duckdb database
 @st.cache_resource
 def get_duckdb_connection():
     return duckdb.connect(database=':memory:', read_only=False)
