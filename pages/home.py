@@ -10,6 +10,7 @@ import numpy as np
 import validators
 import openpyxl
 import requests
+import duckdb
 import os
 import io
 import re
@@ -76,6 +77,10 @@ def get_column_metadata(df, ncols, scols):
 
     return metadata_df
 
+@st.cache_resource
+def get_duckdb_connection():
+    return duckdb.connect(database=':memory:', read_only=False)
+
 
 def on_selection_change(col):  # function for table and column transformation
     selection = st.session_state[col]
@@ -86,8 +91,8 @@ def on_selection_change(col):  # function for table and column transformation
             dialog(col, 'rename', f'Rename {col}', 'Enter new column name:')
         case Options.spc:
             dialog(col, 'split', f'Split {col}', 'Enter delimiter:')
-        case Options.cat:
-            st.session_state.df = st.session_state.dataframe
+        case Options.cat:            
+            st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
         case Options.pvt:
             pivot_dialog()
         case Options.sfh:
@@ -293,15 +298,17 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
         st.stop()
 
     if file_ext == '.csv':
-        st.session_state.dataframe = pd.read_csv(loaded_file)
+        st.session_state.df = pd.read_csv(loaded_file)
     elif file_ext == '.parquet':
-        st.session_state.dataframe = pd.read_parquet(loaded_file)
+        st.session_state.df = pd.read_parquet(loaded_file)
     elif file_ext in ['.xlsx', '.xls']:
-        st.session_state.dataframe = pd.read_excel(
+        st.session_state.df = pd.read_excel(
             loaded_file, engine='openpyxl')
 
-    st.session_state.df = st.session_state.dataframe
-    st.rerun()
+    if not st.session_state.df.empty:
+        st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
+        st.session_state.cxtn.from_df(st.session_state.df).create('duckdb_table')
+        st.rerun()
 
 
 def download_file():  # download from cloud storage
@@ -323,16 +330,17 @@ def download_file():  # download from cloud storage
         response.raise_for_status()
         match selection:
             case 'csv':
-                st.session_state.dataframe = pd.read_csv(
+                st.session_state.df = pd.read_csv(
                     io.StringIO(response.content.decode('utf-8')))
             case 'parquet':
-                st.session_state.dataframe = pd.read_parquet(
+                st.session_state.df = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
             case 'excel':
-                st.session_state.dataframe = pd.read_excel(
+                st.session_state.df = pd.read_excel(
                     io.BytesIO(response.content), engine='openpyxl')
-        if not st.session_state.dataframe.empty:
-            st.session_state.df = st.session_state.dataframe
+        if not st.session_state.df.empty:
+            st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
+            st.session_state.cxtn.from_df(st.session_state.df).create('duckdb_table')
             st.rerun()
 
     except Exception as e:
@@ -366,7 +374,6 @@ datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.
 
 
 def init_state():
-    st.session_state.dataframe = pd.DataFrame()
     st.session_state.schema_df = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
     st.session_state.query_warehouse = False
@@ -486,8 +493,9 @@ def get_table_data(arr):
                         {st.session_state.no_of_rows};
                 """
         
-    st.session_state.dataframe = run_query(query)
-    st.session_state.df = st.session_state.dataframe
+    st.session_state.df = run_query(query)
+    st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
+    st.session_state.cxtn.from_df(st.session_state.df).create('duckdb_table')
     
     st.rerun()
 
@@ -516,6 +524,9 @@ def main():
     
     if 'query_warehouse' not in st.session_state:
         st.session_state.query_warehouse = False
+        
+    if 'cxtn' not in st.session_state:
+        st.session_state.cxtn = get_duckdb_connection()
 
     st.markdown('##### Simple tool for exploratory data analysis')
 
