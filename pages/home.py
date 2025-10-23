@@ -562,8 +562,10 @@ def main():
                         reset_data()
                         st.rerun()
 
-            st.write(f'Row Count: {st.session_state.row_count}')
-            st.write(f'Column Count: {st.session_state.column_count}')
+            with st.container(horizontal=True):
+                st.write(f'Row Count: {st.session_state.row_count}')
+                st.write(f'Column Count: {st.session_state.column_count}')
+                
             st.dataframe(
                 metadata_df,
                 column_config={
