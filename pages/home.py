@@ -94,8 +94,7 @@ def on_selection_change(col):  # function for table and column transformation
         case Options.spc:
             dialog(col, 'split', f'Split {col}', 'Enter delimiter:')
         case Options.cat:            
-            st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
-            st.session_state.reset = False
+            reset_data()
         case Options.pvt:
             pivot_dialog()
         case Options.sfh:
@@ -513,6 +512,10 @@ def run_query(query):
     except Exception as e:
         st.error('Connection error.')
         st.stop()
+        
+def reset_data():
+    st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
+    st.session_state.reset = False
 
 def main():
 
@@ -556,8 +559,7 @@ def main():
             if st.session_state.reset:
                 with st.container(horizontal=True, horizontal_alignment='right'):
                     if st.button('Reset data'):
-                        st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
-                        st.session_state.reset = False
+                        reset_data()
                         st.rerun()
 
             st.write(f'Row Count: {st.session_state.row_count}')
