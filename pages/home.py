@@ -85,6 +85,7 @@ def get_duckdb_connection():
 
 def on_selection_change(col):  # function for table and column transformation
     selection = st.session_state[col]
+    st.session_state.reset = True
     match selection:
         case Options.rmc:
             st.session_state.df = st.session_state.df.drop(col, axis=1)
@@ -94,6 +95,7 @@ def on_selection_change(col):  # function for table and column transformation
             dialog(col, 'split', f'Split {col}', 'Enter delimiter:')
         case Options.cat:            
             st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
+            st.session_state.reset = False
         case Options.pvt:
             pivot_dialog()
         case Options.sfh:
@@ -528,6 +530,9 @@ def main():
     # create duckdb connector
     if 'cxtn' not in st.session_state:
         st.session_state.cxtn = get_duckdb_connection()
+        
+    if 'reset' not in st.session_state:
+        st.session_state.reset = False
 
     st.markdown('##### Simple tool for exploratory data analysis')
 
@@ -548,10 +553,12 @@ def main():
             metadata_df = get_column_metadata(
                 st.session_state.df, numeric_cols, string_cols)
 
-            with st.container(horizontal=True, horizontal_alignment='right'):
-                if st.button('Reset data'):
-                    st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
-                    st.rerun()
+            if st.session_state.reset:
+                with st.container(horizontal=True, horizontal_alignment='right'):
+                    if st.button('Reset data'):
+                        st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
+                        st.session_state.reset = False
+                        st.rerun()
 
             st.write(f'Row Count: {st.session_state.row_count}')
             st.write(f'Column Count: {st.session_state.column_count}')
@@ -565,7 +572,7 @@ def main():
                     ) for col in metadata_df.columns
                 }
             )
-            with st.container(horizontal=True, horizontal_alignment='right'):
+            with st.container():
                 if st.button('Clear data'):
                     init_state()
                     st.rerun()
