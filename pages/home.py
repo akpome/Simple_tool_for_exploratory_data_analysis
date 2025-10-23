@@ -549,8 +549,8 @@ def main():
                 st.session_state.df, numeric_cols, string_cols)
 
             with st.container(horizontal=True, horizontal_alignment='right'):
-                if st.button('Clear data'):
-                    init_state()
+                if st.button('Reset data'):
+                    st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
                     st.rerun()
 
             st.write(f'Row Count: {st.session_state.row_count}')
@@ -565,6 +565,10 @@ def main():
                     ) for col in metadata_df.columns
                 }
             )
+            with st.container(horizontal=True, horizontal_alignment='right'):
+                if st.button('Clear data'):
+                    init_state()
+                    st.rerun()
         elif st.session_state.query_warehouse:
             if st.session_state.dw == 'BigQuery':
                 label1 = 'Enter project id:*'
