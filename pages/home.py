@@ -74,8 +74,8 @@ def get_column_metadata(df, ncols, scols):
 
     # Create DataFrame with metrics as index
     metadata_df = pd.DataFrame(metadata)
-
     return metadata_df
+
 
 # initialize in-memory duckdb database
 @st.cache_resource
@@ -500,7 +500,6 @@ def get_table_data(arr):
     
     st.rerun()
 
-@st.cache_data
 def run_query(query):
     try:
         if st.session_state.dw == 'BigQuery':
@@ -526,6 +525,7 @@ def main():
     if 'query_warehouse' not in st.session_state:
         st.session_state.query_warehouse = False
         
+    # create duckdb connector
     if 'cxtn' not in st.session_state:
         st.session_state.cxtn = get_duckdb_connection()
 
