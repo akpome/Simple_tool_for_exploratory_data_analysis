@@ -235,8 +235,8 @@ def group_by():  # data transformation: group by
                              options=st.session_state.df.columns)
     values_column = st.selectbox(
         f'Select column to aggregate:', options=st.session_state.df.columns)
-    agg_func = st.selectbox(f'Select aggregation function:', options=[
-                            e.value for e in Agg_Funcs]).lower()
+    agg_func_array = [e.value for e in Agg_Funcs]
+    agg_func = st.selectbox(f'Select aggregation function:', options=agg_func_array).lower()
     if st.button('Submit'):
         if values_column in columns and len(columns) < 1:
             st.error('Invalid operation')
@@ -765,7 +765,8 @@ def main():
                     if chart:
                         st.success(chart[f'chart title {i}'])
 
-                    st.selectbox('Select chart type:*', options=[e.value for e in Charts],
+                    chart_type_array = [e.value for e in Charts]
+                    st.selectbox('Select chart type:*', options=chart_type_array,
                                  key=f'chart {i}',
                                  on_change=on_chart_selection_change,
                                  args=[f'chart {i}'])
@@ -819,7 +820,8 @@ def main():
                         if f'y-axis {i}' in chart:
                             st.success(chart[f'y-axis {i}'])
 
-                        st.multiselect('Select color(s):*', options=[e.value for e in Colors],
+                        colors_array = [e.value for e in Colors]
+                        st.multiselect('Select color(s):*', options=colors_array,
                                        key=f'color {i}')
 
                         if f'color {i}' in chart:
