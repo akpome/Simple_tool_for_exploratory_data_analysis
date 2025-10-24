@@ -774,8 +774,7 @@ def main():
                 if len(st.session_state.charts_array) > 0 and len(st.session_state.charts_array) == st.session_state.numberof_charts:
                     chart = st.session_state.charts_array[i]
 
-                else:
-                    if st.session_state.numberof_charts != i + 1:
+                elif st.session_state.numberof_charts != i + 1:
                         continue
 
                 with st.expander(f'Chart {i + 1}', expanded=True):
