@@ -750,8 +750,12 @@ def main():
                     
                 chart = {}
 
-                if len(st.session_state.charts_array) > 0 and len(st.session_state.charts_array) >= st.session_state.numberof_charts:
-                    chart = st.session_state.charts_array[i]                    
+                if len(st.session_state.charts_array) > 0 and len(st.session_state.charts_array) == st.session_state.numberof_charts:
+                    chart = st.session_state.charts_array[i] 
+                    
+                else:
+                    if st.session_state.numberof_charts != i + 1:
+                        continue                 
 
                 with st.expander(f'Chart {i + 1}', expanded=True):
                     # create chart form
@@ -766,7 +770,7 @@ def main():
                                  on_change=on_chart_selection_change,
                                  args=[f'chart {i}'])
 
-                    if chart and f'chart {i}' in chart:
+                    if f'chart {i}' in chart:
                         st.success(chart[f'chart {i}'])
 
                     if st.session_state[f'pie chart {i}']:
@@ -774,13 +778,13 @@ def main():
                         st.selectbox('Select labels:*', options=st.session_state.df.columns,
                                      key=f'labels {i}')
 
-                        if chart and f'labels {i}' in chart:
+                        if f'labels {i}' in chart:
                             st.success(chart[f'labels {i}'])
 
                         st.selectbox('Select values:*', options=st.session_state.df.columns,
                                      key=f'values {i}')
 
-                        if chart and f'values {i}' in chart:
+                        if f'values {i}' in chart:
                             st.success(chart[f'values {i}'])
 
                     elif st.session_state[f'histogram chart {i}']:
@@ -788,37 +792,37 @@ def main():
                         st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
                                      key=f'x-axis {i}')
 
-                        if chart and f'x-axis {i}' in chart:
+                        if f'x-axis {i}' in chart:
                             st.success(chart[f'x-axis {i}'])
 
                         st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
                                        key=f'y-axis {i}')
 
-                        if chart and f'x-axis {i}' in chart:
+                        if f'x-axis {i}' in chart:
                             st.success(chart[f'y-axis {i}'])
 
                         st.number_input('Enter bin size:*', key=f'bins {i}')
 
-                        if chart and f'bins {i}' in chart:
+                        if f'bins {i}' in chart:
                             st.success(chart[f'bins {i}'])
                     else:
 
                         st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
                                      key=f'x-axis {i}')
 
-                        if chart and f'x-axis {i}' in chart:
+                        if f'x-axis {i}' in chart:
                             st.success(chart[f'x-axis {i}'])
 
                         st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
                                        key=f'y-axis {i}')
 
-                        if chart and f'y-axis {i}' in chart:
+                        if f'y-axis {i}' in chart:
                             st.success(chart[f'y-axis {i}'])
 
                         st.multiselect('Select color(s):*', options=[e.value for e in Colors],
                                        key=f'color {i}')
 
-                        if chart and f'color {i}' in chart:
+                        if f'color {i}' in chart:
                             st.success(chart[f'color {i}'])
 
                     # container for form buttons
