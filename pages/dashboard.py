@@ -28,29 +28,29 @@ def chart_row(n, j):
                 title = chart[f'chart title {i}']
                 st.markdown(
                     f'<div style="text-align: center; color: grey;">{title}</div>', unsafe_allow_html=True)
-            match chart[f'chart {i}']: # line, area, bar and scatter charts
+            match chart[f'chart {i}']:  # line, area, bar and scatter charts
                 case Charts.LCH.value | Charts.ACH.value | Charts.BCH.value | Charts.SCH.value:
                     chart_func = chart_funcs_dict[chart[f'chart {i}']]
                     chart_func(chart[f'chart dataframe {i}'],
-                                    x=chart[f'x-axis {i}'],y=chart[f'y-axis {i}'],
-                                    color=[colors_dict[i] for i in chart[f'color {i}']])
-                case Charts.PCH.value: # pie chart
+                               x=chart[f'x-axis {i}'], y=chart[f'y-axis {i}'],
+                               color=[colors_dict[i] for i in chart[f'color {i}']])
+                case Charts.PCH.value:  # pie chart
                     chart_func(px.pie(chart[f'chart dataframe {i}'], values=chart[f'values {i}'],
-                                    names=chart[f'labels {i}']).update_layout(width=500, height=350),
-                                    key=f'pie {i}')
-                case Charts.DCH.value: # donut chart
+                                      names=chart[f'labels {i}']).update_layout(width=500, height=350),
+                               key=f'pie {i}')
+                case Charts.DCH.value:  # donut chart
                     chart_func(px.pie(chart[f'chart dataframe {i}'], values=chart[f'values {i}'],
-                                    names=chart[f'labels {i}'], hole=0.4).update_layout(width=500, height=350),
-                                    key=f'donut {i}')
-                case Charts.HCH.value: # histogram chart
+                                      names=chart[f'labels {i}'], hole=0.4).update_layout(width=500, height=350),
+                               key=f'donut {i}')
+                case Charts.HCH.value:  # histogram chart
                     if chart[f'bins {i}']:
                         bin_size = int(chart[f'bins {i}'])
                     else:
                         bin_size = 0
                     chart_func(px.histogram(chart[f'chart dataframe {i}'], x=chart[f'x-axis {i}'],
-                                                 y=chart[f'y-axis {i}'], nbins=bin_size).update_layout(bargap=0.01, 
-                                                        width=500, height=350),
-                                                        key=f'histogram {i}')
+                                            y=chart[f'y-axis {i}'], nbins=bin_size).update_layout(bargap=0.01,
+                                                                                                  width=500, height=350),
+                               key=f'histogram {i}')
 
 
 def main():

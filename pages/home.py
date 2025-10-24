@@ -19,11 +19,14 @@ from pathlib import Path
 from google.oauth2 import service_account
 from google.cloud import bigquery
 
+
 # required to import statics from parent directory
 dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))
 
 # create columns metadata and statistics
+
+
 def get_column_metadata(df, ncols, scols):
     # save dataframe row and column count for display
     st.session_state.row_count = df.shape[0]
@@ -93,7 +96,7 @@ def on_selection_change(col):  # function for table and column transformation
             dialog(col, 'rename', f'Rename {col}', 'Enter new column name:')
         case Options.spc:
             dialog(col, 'split', f'Split {col}', 'Enter delimiter:')
-        case Options.cat:            
+        case Options.cat:
             reset_data()
         case Options.pvt:
             pivot_dialog()
@@ -236,7 +239,8 @@ def group_by():  # data transformation: group by
     values_column = st.selectbox(
         f'Select column to aggregate:', options=st.session_state.df.columns)
     agg_func_array = [e.value for e in Agg_Funcs]
-    agg_func = st.selectbox(f'Select aggregation function:', options=agg_func_array).lower()
+    agg_func = st.selectbox(f'Select aggregation function:',
+                            options=agg_func_array).lower()
     if st.button('Submit'):
         if values_column in columns and len(columns) < 1:
             st.error('Invalid operation')
@@ -309,7 +313,8 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
 
     if not st.session_state.df.empty:
         st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
-        st.session_state.cxtn.from_df(st.session_state.df).create('duckdb_table')
+        st.session_state.cxtn.from_df(
+            st.session_state.df).create('duckdb_table')
         st.rerun()
 
 
@@ -342,12 +347,14 @@ def download_file():  # download from cloud storage
                     io.BytesIO(response.content), engine='openpyxl')
         if not st.session_state.df.empty:
             st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
-            st.session_state.cxtn.from_df(st.session_state.df).create('duckdb_table')
+            st.session_state.cxtn.from_df(
+                st.session_state.df).create('duckdb_table')
             st.rerun()
 
     except Exception as e:
         st.error('Error importing file or invallid file format')
         st.stop()
+
 
 def on_chart_selection_change(chart_key):  # selection of chart type
     i = chart_key.split()[1]
@@ -423,11 +430,13 @@ def match_axis_colors(i):  # match selected colors with y-axis
         if len(st.session_state[f'y-axis {i}']) != len(st.session_state[f'color {i}']):
             st.error('y-axis selections must be equal to selected colors')
             st.stop()
-    
-def set_warehouse():  
+
+
+def set_warehouse():
     if st.session_state.data_warehouse is not '--':
         st.session_state.dw = st.session_state.data_warehouse
         st.session_state.query_warehouse = True
+
 
 # Create BigQuery API client.
 credentials = service_account.Credentials.from_service_account_info(
@@ -435,12 +444,13 @@ credentials = service_account.Credentials.from_service_account_info(
 )
 client = bigquery.Client(credentials=credentials)
 
+
 def get_table_schema(wh_input_01,  wh_input_02, table_id):
-       
-    st.session_state.wh_input_01 = wh_input_01 # project or dataset id
-    st.session_state.wh_input_02 = wh_input_02 # dataset or schema id
+
+    st.session_state.wh_input_01 = wh_input_01  # project or dataset id
+    st.session_state.wh_input_02 = wh_input_02  # dataset or schema id
     st.session_state.table_id = table_id
-    
+
     if st.session_state.dw == 'BIGQUERY':
         query = f"""
                     SELECT
@@ -454,7 +464,7 @@ def get_table_schema(wh_input_01,  wh_input_02, table_id):
                     ORDER BY
                         ordinal_position;
                 """
-    else:        
+    else:
         query = f"""
                     SELECT
                         column_name,
@@ -467,15 +477,16 @@ def get_table_schema(wh_input_01,  wh_input_02, table_id):
                     ORDER BY
                         ordinal_position;
                 """
-    
+
     st.session_state.schema_df = run_query(query)
-        
+
     st.rerun()
-    
+
+
 def get_table_data(arr):
-    
-    comma_sep_colnames =  ", ".join(arr)
-    
+
+    comma_sep_colnames = ", ".join(arr)
+
     if st.session_state.dw == 'BIGQUERY':
         query = f"""
                     SELECT
@@ -494,28 +505,32 @@ def get_table_data(arr):
                     LIMIT
                         {st.session_state.no_of_rows};
                 """
-        
+
     st.session_state.df = run_query(query)
     st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
     st.session_state.cxtn.from_df(st.session_state.df).create('duckdb_table')
-    
+
     st.rerun()
+
 
 def run_query(query):
     try:
         if st.session_state.dw == 'BIGQUERY':
             query = client.query(query)
-            return query.to_dataframe()   
+            return query.to_dataframe()
         elif st.session_state.dw == 'SNOWFLAKE':
             cxtn = st.connection("snowflake")
-            return cxtn.query(query) 
+            return cxtn.query(query)
     except Exception as e:
         st.error('Connection error.')
         st.stop()
-        
+
+
 def reset_data():
-    st.session_state.df = st.session_state.cxtn.execute('SELECT * FROM duckdb_table;').fetchdf()
+    st.session_state.df = st.session_state.cxtn.execute(
+        'SELECT * FROM duckdb_table;').fetchdf()
     st.session_state.reset = False
+
 
 def main():
 
@@ -523,17 +538,17 @@ def main():
 
     if 'df' not in st.session_state:
         st.session_state.df = pd.DataFrame()
-        
+
     if 'schema_df' not in st.session_state:
         st.session_state.schema_df = pd.DataFrame()
-    
+
     if 'query_warehouse' not in st.session_state:
         st.session_state.query_warehouse = False
-        
+
     # create duckdb connector
     if 'cxtn' not in st.session_state:
         st.session_state.cxtn = get_duckdb_connection()
-        
+
     if 'reset' not in st.session_state:
         st.session_state.reset = False
 
@@ -541,9 +556,9 @@ def main():
 
     tab1, tab2, tab3, tab4 = st.tabs(
         ['Ingest Data', 'Transform Data', 'Data Table', 'Create Charts'])
-    
+
     # data ingest tab
-    with tab1:         
+    with tab1:
         if not st.session_state.df.empty:
             # get column data types
             numeric_cols = st.session_state.df.select_dtypes(
@@ -565,7 +580,7 @@ def main():
             with st.container(horizontal=True):
                 st.write(f'Row Count: {st.session_state.row_count}')
                 st.write(f'Column Count: {st.session_state.column_count}')
-                
+
             st.dataframe(
                 metadata_df,
                 column_config={
@@ -589,7 +604,7 @@ def main():
                 label1 = 'Enter database id:*'
                 label2 = 'Enter schema id:*'
                 label3 = 'Enter table id:*'
-                
+
             with st.container(border=True):
                 if st.session_state.schema_df.empty:
                     wh_input_01 = st.text_input(label1).lower().strip()
@@ -598,53 +613,60 @@ def main():
                     with st.container(horizontal=True):
                         if st.button('Get schema'):
                             if wh_input_01 and wh_input_02 and table_id:
-                                get_table_schema(wh_input_01,  wh_input_02, table_id)
+                                get_table_schema(
+                                    wh_input_01,  wh_input_02, table_id)
                             else:
                                 st.error('Missing input(s)')
                         if st.button('Cancel'):
-                            st.session_state.query_warehouse = False 
-                            st.rerun() 
-                else: 
+                            st.session_state.query_warehouse = False
+                            st.rerun()
+                else:
                     with st.container():
                         checkbox_selections_dict = {}
                         st.write('Select colomn(s):')
                         if st.session_state.dw == 'BIGQUERY':
                             for idx, row in st.session_state.schema_df.iterrows():
-                                st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
-                                checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
+                                st.checkbox(
+                                    f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
+                                checkbox_selections_dict[row["column_name"]
+                                                         ] = st.session_state[f'{row}_{idx}']
                         else:
                             for idx, row in st.session_state.schema_df.iterrows():
-                                st.checkbox(f'{row["COLUMN_NAME"]} {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
-                                checkbox_selections_dict[row["COLUMN_NAME"]] = st.session_state[f'{row}_{idx}']
-                                
+                                st.checkbox(
+                                    f'{row["COLUMN_NAME"]} {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
+                                checkbox_selections_dict[row["COLUMN_NAME"]
+                                                         ] = st.session_state[f'{row}_{idx}']
+
                         n = 1000
-                        nrange = 100  
+                        nrange = 100
                         options = [i * n for i in range(1, nrange + 1)]
-                        st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
+                        st.selectbox(f'Select number of rows',
+                                     options=options, key='no_of_rows')
                         with st.container(horizontal=True):
                             if st.button('Get data'):
-                                columns_array = [i for i, v in checkbox_selections_dict.items() if v]
+                                columns_array = [
+                                    i for i, v in checkbox_selections_dict.items() if v]
                                 get_table_data(columns_array)
                             if st.button('Cancel'):
-                                st.session_state.query_warehouse = False 
+                                st.session_state.query_warehouse = False
                                 st.session_state.schema_df = pd.DataFrame()
-                                st.rerun() 
-                    
+                                st.rerun()
+
         else:
             # upload widget container
             with st.container(border=True):
                 try:
-                    uploaded_file = st.file_uploader('Upload file:', # upload widget
-                                                                        accept_multiple_files=False,
-                                                                        on_change=init_state,
-                                                                        type=[
-                                                                            'csv', 'parquet', 'excel']
-                                                                )
-                    if uploaded_file: 
+                    uploaded_file = st.file_uploader('Upload file:',  # upload widget
+                                                     accept_multiple_files=False,
+                                                     on_change=init_state,
+                                                     type=[
+                                                         'csv', 'parquet', 'excel']
+                                                     )
+                    if uploaded_file:
                         file_name = uploaded_file.name
                         file_ext = os.path.splitext(file_name)[1].lower()
                         load_dataframe(uploaded_file, file_ext)
-                        
+
                 except Exception as e:
                     st.error('File upload error')
                     st.stop()
@@ -654,17 +676,16 @@ def main():
                 url_input = st.text_input(
                     'Enter file url:', key='url').lower().strip()
                 st.selectbox(f'Select file type:', options=[
-                                'CSV', 'PARQUET', 'EXCEL'], key='file_type')
+                    'CSV', 'PARQUET', 'EXCEL'], key='file_type')
                 if st.button('Import file') and validators.url(url_input):
                     download_file()
-                    
+
             # import warehouse container
             with st.container(border=True):
                 st.selectbox(f'Select data warehouse:', options=[
-                                '--','BIGQUERY', 'SNOWFLAKE'], 
-                                on_change = set_warehouse, 
-                                key='data_warehouse')
-                
+                    '--', 'BIGQUERY', 'SNOWFLAKE'],
+                    on_change=set_warehouse,
+                    key='data_warehouse')
 
     # transform data tab
     with tab2:
@@ -747,15 +768,15 @@ def main():
 
                 if f'bins {i}' not in st.session_state:
                     st.session_state[f'bins {i}'] = 0
-                    
+
                 chart = {}
 
                 if len(st.session_state.charts_array) > 0 and len(st.session_state.charts_array) == st.session_state.numberof_charts:
-                    chart = st.session_state.charts_array[i] 
-                    
+                    chart = st.session_state.charts_array[i]
+
                 else:
                     if st.session_state.numberof_charts != i + 1:
-                        continue                 
+                        continue
 
                 with st.expander(f'Chart {i + 1}', expanded=True):
                     # create chart form
