@@ -747,11 +747,11 @@ def main():
 
                 if f'bins {i}' not in st.session_state:
                     st.session_state[f'bins {i}'] = 0
+                    
+                chart = {}
 
                 if len(st.session_state.charts_array) > 0 and len(st.session_state.charts_array) >= st.session_state.numberof_charts:
-                    chart = st.session_state.charts_array[i]
-                else:
-                    chart = {}
+                    chart = st.session_state.charts_array[i]                    
 
                 with st.expander(f'Chart {i + 1}', expanded=True):
                     # create chart form
