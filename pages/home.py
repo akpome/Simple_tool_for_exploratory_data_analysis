@@ -441,7 +441,7 @@ def get_table_schema(wh_input_01,  wh_input_02, table_id):
     st.session_state.wh_input_02 = wh_input_02 # dataset or schema id
     st.session_state.table_id = table_id
     
-    if st.session_state.dw == 'BigQuery':
+    if st.session_state.dw == 'BIGQUERY':
         query = f"""
                     SELECT
                         column_name,
@@ -476,7 +476,7 @@ def get_table_data(arr):
     
     comma_sep_colnames =  ", ".join(arr)
     
-    if st.session_state.dw == 'BigQuery':
+    if st.session_state.dw == 'BIGQUERY':
         query = f"""
                     SELECT
                         {comma_sep_colnames}
@@ -503,10 +503,10 @@ def get_table_data(arr):
 
 def run_query(query):
     try:
-        if st.session_state.dw == 'BigQuery':
+        if st.session_state.dw == 'BIGQUERY':
             query = client.query(query)
             return query.to_dataframe()   
-        elif st.session_state.dw == 'Snowflake':
+        elif st.session_state.dw == 'SNOWFLAKE':
             cxtn = st.connection("snowflake")
             return cxtn.query(query) 
     except Exception as e:
@@ -581,11 +581,11 @@ def main():
                     init_state()
                     st.rerun()
         elif st.session_state.query_warehouse:
-            if st.session_state.dw == 'BigQuery':
+            if st.session_state.dw == 'BIGQUERY':
                 label1 = 'Enter project id:*'
                 label2 = 'Enter dataset id:*'
                 label3 = 'Enter table id:*'
-            elif st.session_state.dw == 'Snowflake':
+            elif st.session_state.dw == 'SNOWFLAKE':
                 label1 = 'Enter database id:*'
                 label2 = 'Enter schema id:*'
                 label3 = 'Enter table id:*'
@@ -608,7 +608,7 @@ def main():
                     with st.container():
                         checkbox_selections_dict = {}
                         st.write('Select colomn(s):')
-                        if st.session_state.dw == 'BigQuery':
+                        if st.session_state.dw == 'BIGQUERY':
                             for idx, row in st.session_state.schema_df.iterrows():
                                 st.checkbox(f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
                                 checkbox_selections_dict[row["column_name"]] = st.session_state[f'{row}_{idx}']
@@ -617,8 +617,9 @@ def main():
                                 st.checkbox(f'{row["COLUMN_NAME"]} {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
                                 checkbox_selections_dict[row["COLUMN_NAME"]] = st.session_state[f'{row}_{idx}']
                                 
-                        n = 1000  
-                        options = [i * n for i in range(1, n + 1)]
+                        n = 1000
+                        nrange = 100  
+                        options = [i * n for i in range(1, nrange + 1)]
                         st.selectbox(f'Select number of rows', options=options, key='no_of_rows')
                         with st.container(horizontal=True):
                             if st.button('Get data'):
@@ -660,7 +661,7 @@ def main():
             # import warehouse container
             with st.container(border=True):
                 st.selectbox(f'Select data warehouse:', options=[
-                                '--','BigQuery', 'Snowflake'], 
+                                '--','BIGQUERY', 'SNOWFLAKE'], 
                                 on_change = set_warehouse, 
                                 key='data_warehouse')
                 
@@ -752,7 +753,7 @@ def main():
                 else:
                     chart = {}
 
-                with st.expander(f'Chart {i + 1}'):
+                with st.expander(f'Chart {i + 1}', expanded=True):
                     # create chart form
                     st.text_input('Enter a descriptive title for chart:*',
                                   key=f'chart title {i}')
