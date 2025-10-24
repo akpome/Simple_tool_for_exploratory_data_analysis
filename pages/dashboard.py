@@ -13,7 +13,7 @@ sys.path.insert(0, str(dir))
 
 def chart_row(n, second_row=False):
     # first row of charts
-    if not second_row and n > 4:
+    if not second_row and n > 2:
         n = 2
     # second row of charts
     if second_row:
@@ -61,7 +61,7 @@ def main():
         with st.container():
             n = len(st.session_state.charts_array)
             try:
-                if n > 0 and n <= 4: # first row of charts                    
+                if n > 0 and n <= 2: # first row of charts                    
                     chart_row(n)
                 if n > 2: # second row of charts
                     chart_row(n)

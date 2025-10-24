@@ -349,9 +349,9 @@ def download_file():  # download from cloud storage
         st.error('Error importing file or invallid file format')
         st.stop()
 
-def on_chart_selection_change(settings):  # selection of chart type
-    h, i = settings.split()
-    match st.session_state[f'chart {i}']:
+def on_chart_selection_change(chart_key):  # selection of chart type
+    i = chart_key.split()[1]
+    match st.session_state[chart_key]:
         case Charts.LCH.value | Charts.ACH.value | Charts.BCH.value | Charts.SCH.value:
             st.session_state[f'pie chart {i}'] = False
             st.session_state[f'histogram chart {i}'] = False
@@ -772,17 +772,13 @@ def main():
                     if st.session_state[f'pie chart {i}']:
 
                         st.selectbox('Select labels:*', options=st.session_state.df.columns,
-                                     key=f'labels {i}',
-                                     on_change=on_chart_selection_change,
-                                     args=[f'labels {i}'])
+                                     key=f'labels {i}')
 
                         if chart and f'labels {i}' in chart:
                             st.success(chart[f'labels {i}'])
 
                         st.selectbox('Select values:*', options=st.session_state.df.columns,
-                                     key=f'values {i}',
-                                     on_change=on_chart_selection_change,
-                                     args=[f'values {i}'])
+                                     key=f'values {i}')
 
                         if chart and f'values {i}' in chart:
                             st.success(chart[f'values {i}'])
@@ -790,17 +786,13 @@ def main():
                     elif st.session_state[f'histogram chart {i}']:
 
                         st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
-                                     key=f'x-axis {i}',
-                                     on_change=on_chart_selection_change,
-                                     args=[f'x-axis {i}'])
+                                     key=f'x-axis {i}')
 
                         if chart and f'x-axis {i}' in chart:
                             st.success(chart[f'x-axis {i}'])
 
                         st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
-                                       key=f'y-axis {i}',
-                                       on_change=on_chart_selection_change,
-                                       args=[f'y-axis {i}'])
+                                       key=f'y-axis {i}')
 
                         if chart and f'x-axis {i}' in chart:
                             st.success(chart[f'y-axis {i}'])
@@ -812,25 +804,19 @@ def main():
                     else:
 
                         st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
-                                     key=f'x-axis {i}',
-                                     on_change=on_chart_selection_change,
-                                     args=[f'x-axis {i}'])
+                                     key=f'x-axis {i}')
 
                         if chart and f'x-axis {i}' in chart:
                             st.success(chart[f'x-axis {i}'])
 
                         st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
-                                       key=f'y-axis {i}',
-                                       on_change=on_chart_selection_change,
-                                       args=[f'y-axis {i}'])
+                                       key=f'y-axis {i}')
 
                         if chart and f'y-axis {i}' in chart:
                             st.success(chart[f'y-axis {i}'])
 
                         st.multiselect('Select color(s):*', options=[e.value for e in Colors],
-                                       key=f'color {i}',
-                                       on_change=on_chart_selection_change,
-                                       args=[f'color {i}'])
+                                       key=f'color {i}')
 
                         if chart and f'color {i}' in chart:
                             st.success(chart[f'color {i}'])
