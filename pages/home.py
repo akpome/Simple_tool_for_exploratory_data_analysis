@@ -31,7 +31,7 @@ def get_column_metadata(df, ncols, scols):
     # save dataframe row and column count for display
     st.session_state.row_count = df.shape[0]
     st.session_state.column_count = df.shape[1]
-    
+
     # create dictionary for dataframe metadata
     metadata = {
         'Data Type': df.dtypes,
@@ -557,6 +557,9 @@ def main():
 
     if 'reset' not in st.session_state:
         st.session_state.reset = False
+
+    if 'dw' not in st.session_state:
+        st.session_state.dw = False
 
     if 'column_datatype_dict' not in st.session_state:
         st.session_state.column_datatype_dict = {}
