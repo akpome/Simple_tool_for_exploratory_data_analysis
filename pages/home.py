@@ -637,9 +637,9 @@ def main():
                                 checkbox_selections_dict[row["COLUMN_NAME"]
                                                          ] = st.session_state[f'{row}_{idx}']
 
-                        n = 1000
+                        nstep = 1000
                         nrange = 100
-                        options = [i * n for i in range(1, nrange + 1)]
+                        options = [i * nstep for i in range(1, nrange + 1)]
                         st.selectbox(f'Select number of rows',
                                      options=options, key='no_of_rows')
                         with st.container(horizontal=True):
@@ -771,9 +771,11 @@ def main():
 
                 chart = {}
 
-                if len(st.session_state.charts_array) > 0 and len(st.session_state.charts_array) == st.session_state.numberof_charts:
+                # condition to display existing chart update forms
+                if len(st.session_state.charts_array) == st.session_state.numberof_charts:
                     chart = st.session_state.charts_array[i]
 
+                # condition to display create chart form
                 elif st.session_state.numberof_charts != i + 1:
                         continue
 
@@ -850,6 +852,7 @@ def main():
                     # container for form buttons
                     with st.container(horizontal=True, horizontal_alignment='right', vertical_alignment='center'):
 
+                        # condition to display buttons for last chart update form
                         if len(st.session_state.charts_array) == st.session_state.numberof_charts\
                                 and st.session_state.numberof_charts == i + 1:
 
@@ -868,6 +871,7 @@ def main():
                                 if st.button('Update', key=f'update_button_{i}'):
                                     render_chart(i, True)
 
+                        # condition to display button for create chart form
                         elif len(st.session_state.charts_array) < st.session_state.numberof_charts\
                                 and st.session_state.numberof_charts == i + 1:
 
@@ -879,7 +883,12 @@ def main():
                             if validate:
                                 if st.button('Render Chart', key=f'render_button_{i}'):
                                     render_chart(i)
+
+                        # condition to display buttons chart for any other form
                         else:
+                            if st.button('Cancel', key=f'cancel1_button_{i}'):
+                                st.switch_page('pages/dashboard.py')
+
                             validate = validate_input(i)
                             if validate:
                                 if st.button('Update', key=f'update_button_{i}'):
