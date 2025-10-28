@@ -455,32 +455,25 @@ def get_table_schema(wh_input_01,  wh_input_02, table_id):
     st.session_state.wh_input_02 = wh_input_02  # dataset or schema id
     st.session_state.table_id = table_id
 
-    if st.session_state.dw == 'BIGQUERY':
-        query = f"""
-                    SELECT
-                        column_name,
-                        data_type,
-                        is_nullable
-                    FROM
-                        `{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.INFORMATION_SCHEMA.COLUMNS`
-                    WHERE
-                        table_name = '{st.session_state.table_id}'
-                    ORDER BY
-                        ordinal_position;
-                """
-    else:
-        query = f"""
-                    SELECT
-                        column_name,
-                        data_type,
-                        is_nullable
-                    FROM
-                        {st.session_state.wh_input_01}.INFORMATION_SCHEMA.COLUMNS
-                    WHERE
-                        TABLE_SCHEMA = '{st.session_state.wh_input_02.upper()}' AND TABLE_NAME = '{st.session_state.table_id.upper()}'
-                    ORDER BY
-                        ordinal_position;
-                """
+    table_name = f"`{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.INFORMATION_SCHEMA.COLUMNS`"
+    condition = f"table_name = '{st.session_state.table_id}'"
+
+    if st.session_state.dw == 'SNOWFLAKE':
+        table_name = f"{st.session_state.wh_input_01}.INFORMATION_SCHEMA.COLUMNS"
+        condition = f"TABLE_SCHEMA = '{st.session_state.wh_input_02.upper()}' AND TABLE_NAME = '{st.session_state.table_id.upper()}'"
+
+    query = f"""
+                SELECT
+                    column_name,
+                    data_type,
+                    is_nullable
+                FROM
+                    {table_name}
+                WHERE
+                    {condition}
+                ORDER BY
+                    ordinal_position;
+            """
 
     st.session_state.schema_df = run_query(query)
 
@@ -491,24 +484,20 @@ def get_table_data(arr):
 
     comma_sep_colnames = ", ".join(arr)
 
-    if st.session_state.dw == 'BIGQUERY':
-        query = f"""
-                    SELECT
-                        {comma_sep_colnames}
-                    FROM
-                        `{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}`
-                    LIMIT
-                        {st.session_state.no_of_rows};
-                """
-    else:
-        query = f"""
-                    SELECT
-                        {comma_sep_colnames}
-                    FROM
-                        {st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}
-                    LIMIT
-                        {st.session_state.no_of_rows};
-                """
+    table_name = f"`{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}`"
+    
+    if st.session_state.dw == 'SNOWFLAKE':
+        table_name = f"{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}"
+
+    query = f"""
+                SELECT
+                    {comma_sep_colnames}
+                FROM
+                    {table_name}
+                LIMIT
+                    {st.session_state.no_of_rows};
+            """
+
 
     st.session_state.df = run_query(query)
     st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
