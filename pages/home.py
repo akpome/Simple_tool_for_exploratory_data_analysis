@@ -25,8 +25,6 @@ dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))
 
 # create columns metadata and statistics
-
-
 def get_column_metadata(df, ncols, scols):
     # save dataframe row and column count for display
     st.session_state.row_count = df.shape[0]
@@ -34,16 +32,16 @@ def get_column_metadata(df, ncols, scols):
 
     # create dictionary for dataframe metadata
     metadata = {
-        'Data Type': df.dtypes,
+        'Data Type': df.dtypes.astype('str'),
         'Null Count': df.isnull().sum(),
         'Unique Values': df.nunique()
     }
 
     for col in df.columns:
-        
-        if st.session_state.dw == 'BIGQUERY' or st.session_state.dw == 'SNOWFLAKE':
+
+        if col in st.session_state.column_datatype_dict: 
             metadata['Data Type'][col] = (
-                st.session_state.column_datatype_dict[col]).lower()        
+                st.session_state.column_datatype_dict[col]).lower()              
 
         if col in scols:
             metadata['Empty String Count'] = metadata.get(
@@ -580,6 +578,12 @@ def main():
             datetime_cols = st.session_state.df.select_dtypes(
                 include='datetime64').columns
 
+            for col in string_cols:
+                st.session_state.column_datatype_dict[col] = 'String'            
+
+            for col in datetime_cols:
+                st.session_state.column_datatype_dict[col] = 'Datetime'
+
             metadata_df = get_column_metadata(
                 st.session_state.df, numeric_cols, string_cols)
 
@@ -635,24 +639,24 @@ def main():
                     with st.container():
                         checkbox_selections_dict = {}
                         st.write('Select colomn(s):')
-                        if st.session_state.dw == 'BIGQUERY':
-                            for idx, row in st.session_state.schema_df.iterrows():
-                                st.checkbox(
-                                    f'{row["column_name"]} {row["data_type"]} | {"Nullable" if row["is_nullable"] else "Not Nullable"}', key=f'{row}_{idx}')
-                                checkbox_selections_dict[row["column_name"]
-                                                         ] = st.session_state[f'{row}_{idx}']
-                                # save column data type in a dictionary
-                                st.session_state.column_datatype_dict[row["column_name"]
-                                                         ] = row["data_type"]
-                        else:
-                            for idx, row in st.session_state.schema_df.iterrows():
-                                st.checkbox(
-                                    f'{row["COLUMN_NAME"]} {row["DATA_TYPE"]} | {"Nullable" if row["IS_NULLABLE"] else "Not Nullable"}', key=f'{row}_{idx}')
-                                checkbox_selections_dict[row["COLUMN_NAME"]
-                                                         ] = st.session_state[f'{row}_{idx}']
-                                # save column data type in a dictionary
-                                st.session_state.column_datatype_dict[row["COLUMN_NAME"]
-                                                         ] = row["DATA_TYPE"]
+
+                        column_name = 'column_name'
+                        data_type = 'data_type'
+                        is_nullable = 'is_nullable'
+
+                        if st.session_state.dw == 'SNOWFLAKE':
+                            column_name = column_name.upper()
+                            data_type = data_type.upper()
+                            is_nullable = is_nullable.upper()
+
+                        for idx, row in st.session_state.schema_df.iterrows():
+                            d_type = 'String' if row[data_type] == 'TEXT' else row[data_type].capitalize()
+                            st.checkbox(
+                                f'{row[column_name]} {d_type} | {"Nullable" if row[is_nullable] else "Not Nullable"}', key=f'{row}_{idx}')
+                            checkbox_selections_dict[row[column_name]
+                                                        ] = st.session_state[f'{row}_{idx}']
+                            # save column data type in a dictionary
+                            st.session_state.column_datatype_dict[column_name] = d_type
 
                         nstep = 1000
                         nrange = 100
@@ -720,7 +724,7 @@ def main():
         for col in st.session_state.df.columns:
             if col in datetime_cols:
                 # date column transform options
-                options = datetime_options
+                options = datetime_options                
             elif col in numeric_cols:
                 # numeric column transform options
                 options = numeric_options
