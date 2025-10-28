@@ -485,7 +485,7 @@ def get_table_data(arr):
     comma_sep_colnames = ", ".join(arr)
 
     table_name = f"`{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}`"
-    
+
     if st.session_state.dw == 'SNOWFLAKE':
         table_name = f"{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}"
 
@@ -515,7 +515,7 @@ def run_query(query):
             cxtn = st.connection("snowflake")
             return cxtn.query(query)
     except Exception as e:
-        st.error('Connection error.')
+        st.error(e)
         st.stop()
 
 
