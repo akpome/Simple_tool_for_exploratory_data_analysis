@@ -25,6 +25,8 @@ dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(dir))
 
 # create columns metadata and statistics
+
+
 def get_column_metadata(df, ncols, scols):
     # save dataframe row and column count for display
     st.session_state.row_count = df.shape[0]
@@ -39,9 +41,9 @@ def get_column_metadata(df, ncols, scols):
 
     for col in df.columns:
 
-        if col in st.session_state.column_datatype_dict: 
+        if col in st.session_state.column_datatype_dict:
             metadata['Data Type'][col] = (
-                st.session_state.column_datatype_dict[col]).lower()              
+                st.session_state.column_datatype_dict[col]).lower()
 
         if col in scols:
             metadata['Empty String Count'] = metadata.get(
@@ -300,6 +302,30 @@ def dialog(col, kind, msg, prompt):  # to rename or split column
                         st.rerun()
 
 
+# create duckdb table from chunks of pandas dataframes
+def create_duckdb_table_from_csv(chunks):
+    all_chunks = []
+
+    for chunk in chunks:
+        all_chunks.append(chunk)
+
+    st.session_state.df = pd.concat(all_chunks, ignore_index=True)
+
+    if not st.session_state.df.empty:
+        st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
+        st.session_state.cxtn.from_df(
+            st.session_state.df).create('duckdb_table')
+        st.rerun()
+
+
+# create duckdb table from pandas dataframe
+def create_duckdb_table_from_parquet_or_excel(df):
+    if not df.empty:
+        st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
+        st.session_state.cxtn.from_df(df).create('duckdb_table')
+        st.rerun()
+
+
 def load_dataframe(loaded_file, file_ext):  # load uploaded file
 
     if file_ext not in ['.xlsx', 'xls', '.parquet', '.csv']:
@@ -308,18 +334,16 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
         st.stop()
 
     if file_ext == '.csv':
-        st.session_state.df = pd.read_csv(loaded_file)
-    elif file_ext == '.parquet':
-        st.session_state.df = pd.read_parquet(loaded_file)
-    elif file_ext in ['.xlsx', '.xls']:
-        st.session_state.df = pd.read_excel(
-            loaded_file, engine='openpyxl')
-
-    if not st.session_state.df.empty:
-        st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
-        st.session_state.cxtn.from_df(
-            st.session_state.df).create('duckdb_table')
-        st.rerun()
+        chunk_size = 10000
+        chunks = pd.read_csv(loaded_file, chunksize=chunk_size)
+        create_duckdb_table_from_csv(chunks)
+    else:
+        if file_ext == '.parquet':
+            st.session_state.df = pd.read_parquet(loaded_file)
+        elif file_ext in ['.xlsx', '.xls']:
+            st.session_state.df = pd.read_excel(
+                loaded_file, engine='openpyxl')
+        create_duckdb_table_from_parquet_or_excel(st.session_state.df)
 
 
 def download_file():  # download from cloud storage
@@ -339,21 +363,19 @@ def download_file():  # download from cloud storage
     try:
         response = requests.get(url)
         response.raise_for_status()
-        match selection:
-            case 'csv':
-                st.session_state.df = pd.read_csv(
-                    io.StringIO(response.content.decode('utf-8')))
-            case 'parquet':
+        if selection == 'csv':
+            chunk_size = 10000
+            chunks = pd.read_csv(
+                io.StringIO(response.content.decode('utf-8')), chunksize=chunk_size)
+            create_duckdb_table_from_csv(chunks)
+        else:
+            if selection == 'parquet':
                 st.session_state.df = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
-            case 'excel':
+            elif selection == 'excel':
                 st.session_state.df = pd.read_excel(
                     io.BytesIO(response.content), engine='openpyxl')
-        if not st.session_state.df.empty:
-            st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
-            st.session_state.cxtn.from_df(
-                st.session_state.df).create('duckdb_table')
-            st.rerun()
+            create_duckdb_table_from_parquet_or_excel(st.session_state.df)
 
     except Exception as e:
         st.error('Error importing file or invallid file format')
@@ -485,7 +507,7 @@ def get_table_data(arr):
     comma_sep_colnames = ", ".join(arr)
 
     table_name = f"`{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}`"
-    
+
     if st.session_state.dw == 'SNOWFLAKE':
         table_name = f"{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}"
 
@@ -497,7 +519,6 @@ def get_table_data(arr):
                 LIMIT
                     {st.session_state.no_of_rows};
             """
-
 
     st.session_state.df = run_query(query)
     st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
@@ -568,7 +589,7 @@ def main():
                 include='datetime64').columns
 
             for col in string_cols:
-                st.session_state.column_datatype_dict[col] = 'String'            
+                st.session_state.column_datatype_dict[col] = 'String'
 
             for col in datetime_cols:
                 st.session_state.column_datatype_dict[col] = 'Datetime'
@@ -639,11 +660,12 @@ def main():
                             is_nullable = is_nullable.upper()
 
                         for idx, row in st.session_state.schema_df.iterrows():
-                            d_type = 'String' if row[data_type] == 'TEXT' else row[data_type].capitalize()
+                            d_type = 'String' if row[data_type] == 'TEXT' else row[data_type].capitalize(
+                            )
                             st.checkbox(
                                 f'{row[column_name]} {d_type} | {"Nullable" if row[is_nullable] else "Not Nullable"}', key=f'{row}_{idx}')
                             checkbox_selections_dict[row[column_name]
-                                                        ] = st.session_state[f'{row}_{idx}']
+                                                     ] = st.session_state[f'{row}_{idx}']
                             # save column data type in a dictionary
                             st.session_state.column_datatype_dict[column_name] = d_type
 
@@ -669,8 +691,7 @@ def main():
                     uploaded_file = st.file_uploader('Upload file:',  # upload widget
                                                      accept_multiple_files=False,
                                                      on_change=init_state,
-                                                     type=[
-                                                         'csv', 'parquet', 'excel']
+                                                     type=['csv', 'parquet', 'xlsx', 'xls']
                                                      )
                     if uploaded_file:
                         file_name = uploaded_file.name
@@ -713,7 +734,7 @@ def main():
         for col in st.session_state.df.columns:
             if col in datetime_cols:
                 # date column transform options
-                options = datetime_options                
+                options = datetime_options
             elif col in numeric_cols:
                 # numeric column transform options
                 options = numeric_options
@@ -787,7 +808,7 @@ def main():
 
                 # condition to display create chart form
                 elif st.session_state.numberof_charts != i + 1:
-                        continue
+                    continue
 
                 with st.expander(f'Chart {i + 1}', expanded=True):
                     # create chart form
