@@ -304,12 +304,12 @@ def dialog(col, kind, msg, prompt):  # to rename or split column
 
 # create duckdb table from chunks of pandas dataframes
 def create_duckdb_table_from_csv(chunks):
-    all_chunks = []
+    chunks_array = []
 
     for chunk in chunks:
-        all_chunks.append(chunk)
+        chunks_array.append(chunk)
 
-    st.session_state.df = pd.concat(all_chunks, ignore_index=True)
+    st.session_state.df = pd.concat(chunks_array, ignore_index=True)
 
     if not st.session_state.df.empty:
         st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
