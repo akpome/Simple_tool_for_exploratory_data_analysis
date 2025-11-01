@@ -319,13 +319,13 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
         case '.csv':
             chunk_size = 10000
             chunks_array = []
-            chunks = pd.read_csv(loaded_file, chunksize=chunk_size)        
+            chunks = pd.read_csv(loaded_file, chunksize=chunk_size)
             for chunk in chunks:
                 chunks_array.append(chunk)
             st.session_state.df = pd.concat(chunks_array, ignore_index=True)
         case '.parquet':
             st.session_state.df = pd.read_parquet(loaded_file)
-        case '.xlsx'|'.xls':
+        case '.xlsx' | '.xls':
             st.session_state.df = pd.read_excel(loaded_file, engine='openpyxl')
     if not st.session_state.df.empty:
         create_duckdb_table_from_dataframe(st.session_state.df)
@@ -356,7 +356,8 @@ def download_file():  # download from cloud storage
                     io.StringIO(response.content.decode('utf-8')), chunksize=chunk_size)
                 for chunk in chunks:
                     chunks_array.append(chunk)
-                st.session_state.df = pd.concat(chunks_array, ignore_index=True)
+                st.session_state.df = pd.concat(
+                    chunks_array, ignore_index=True)
             case 'parquet':
                 st.session_state.df = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
@@ -680,7 +681,8 @@ def main():
                     uploaded_file = st.file_uploader('Upload file:',  # upload widget
                                                      accept_multiple_files=False,
                                                      on_change=init_state,
-                                                     type=['csv', 'parquet', 'xlsx', 'xls']
+                                                     type=[
+                                                         'csv', 'parquet', 'xlsx', 'xls']
                                                      )
                     if uploaded_file:
                         file_name = uploaded_file.name
