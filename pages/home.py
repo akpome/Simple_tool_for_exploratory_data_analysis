@@ -302,28 +302,11 @@ def dialog(col, kind, msg, prompt):  # to rename or split column
                         st.rerun()
 
 
-# create duckdb table from chunks of pandas dataframes
-def create_duckdb_table_from_csv(chunks):
-    chunks_array = []
-
-    for chunk in chunks:
-        chunks_array.append(chunk)
-
-    st.session_state.df = pd.concat(chunks_array, ignore_index=True)
-
-    if not st.session_state.df.empty:
-        st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
-        st.session_state.cxtn.from_df(
-            st.session_state.df).create('duckdb_table')
-        st.rerun()
-
-
 # create duckdb table from pandas dataframe
-def create_duckdb_table_from_parquet_or_excel(df):
-    if not df.empty:
-        st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
-        st.session_state.cxtn.from_df(df).create('duckdb_table')
-        st.rerun()
+def create_duckdb_table_from_dataframe(df):
+    st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
+    st.session_state.cxtn.from_df(df).create('duckdb_table')
+    st.rerun()
 
 
 def load_dataframe(loaded_file, file_ext):  # load uploaded file
@@ -332,18 +315,20 @@ def load_dataframe(loaded_file, file_ext):  # load uploaded file
         st.error(
             f'Invalid file type: {file_ext}. Please upload a .csv, .parquet or Excel file (.xlsx or .xls).')
         st.stop()
-
-    if file_ext == '.csv':
-        chunk_size = 10000
-        chunks = pd.read_csv(loaded_file, chunksize=chunk_size)
-        create_duckdb_table_from_csv(chunks)
-    else:
-        if file_ext == '.parquet':
+    match file_ext:
+        case '.csv':
+            chunk_size = 10000
+            chunks_array = []
+            chunks = pd.read_csv(loaded_file, chunksize=chunk_size)        
+            for chunk in chunks:
+                chunks_array.append(chunk)
+            st.session_state.df = pd.concat(chunks_array, ignore_index=True)
+        case '.parquet':
             st.session_state.df = pd.read_parquet(loaded_file)
-        elif file_ext in ['.xlsx', '.xls']:
-            st.session_state.df = pd.read_excel(
-                loaded_file, engine='openpyxl')
-        create_duckdb_table_from_parquet_or_excel(st.session_state.df)
+        case '.xlsx'|'.xls':
+            st.session_state.df = pd.read_excel(loaded_file, engine='openpyxl')
+    if not st.session_state.df.empty:
+        create_duckdb_table_from_dataframe(st.session_state.df)
 
 
 def download_file():  # download from cloud storage
@@ -363,19 +348,23 @@ def download_file():  # download from cloud storage
     try:
         response = requests.get(url)
         response.raise_for_status()
-        if selection == 'csv':
-            chunk_size = 10000
-            chunks = pd.read_csv(
-                io.StringIO(response.content.decode('utf-8')), chunksize=chunk_size)
-            create_duckdb_table_from_csv(chunks)
-        else:
-            if selection == 'parquet':
+        match selection:
+            case 'csv':
+                chunk_size = 10000
+                chunks_array = []
+                chunks = pd.read_csv(
+                    io.StringIO(response.content.decode('utf-8')), chunksize=chunk_size)
+                for chunk in chunks:
+                    chunks_array.append(chunk)
+                st.session_state.df = pd.concat(chunks_array, ignore_index=True)
+            case 'parquet':
                 st.session_state.df = pd.read_parquet(
                     io.StringIO(response.content.decode('utf-8')))
-            elif selection == 'excel':
+            case 'excel':
                 st.session_state.df = pd.read_excel(
                     io.BytesIO(response.content), engine='openpyxl')
-            create_duckdb_table_from_parquet_or_excel(st.session_state.df)
+        if not st.session_state.df.empty:
+            create_duckdb_table_from_dataframe(st.session_state.df)
 
     except Exception as e:
         st.error('Error importing file or invallid file format')
@@ -459,7 +448,7 @@ def match_axis_colors(i):  # match selected colors with y-axis
 
 
 def set_warehouse():
-    if st.session_state.data_warehouse is not '--':
+    if st.session_state.data_warehouse != '--':
         st.session_state.dw = st.session_state.data_warehouse
         st.session_state.query_warehouse = True
 
