@@ -401,7 +401,7 @@ datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.
 def init_state():
     st.session_state.schema_df = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
-    st.session_state.query_warehouse = False
+    cancel()
 
 
 def render_chart(i, update=False):  # rendering charts of dashboard page
@@ -461,54 +461,49 @@ credentials = service_account.Credentials.from_service_account_info(
 client = bigquery.Client(credentials=credentials)
 
 
-def get_table_schema(wh_input_01,  wh_input_02, table_id):
+def get_bigquery_table_schema(project_id,  dataset_id, table_id):
 
-    st.session_state.wh_input_01 = wh_input_01  # project or dataset id
-    st.session_state.wh_input_02 = wh_input_02  # dataset or schema id
+    st.session_state.project_id = project_id 
+    st.session_state.dataset_id = dataset_id
     st.session_state.table_id = table_id
 
-    table_name = f"`{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.INFORMATION_SCHEMA.COLUMNS`"
+    table_name = f"`{st.session_state.project_id}.{st.session_state.dataset_id}.INFORMATION_SCHEMA.COLUMNS`"
     condition = f"table_name = '{st.session_state.table_id}'"
 
-    if st.session_state.dw == 'SNOWFLAKE':
-        table_name = f"{st.session_state.wh_input_01}.INFORMATION_SCHEMA.COLUMNS"
-        condition = f"TABLE_SCHEMA = '{st.session_state.wh_input_02.upper()}' AND TABLE_NAME = '{st.session_state.table_id.upper()}'"
-
-    query = f"""
+    query = f'''
                 SELECT
-                    column_name,
-                    data_type,
-                    is_nullable
+                    column_name,data_type,is_nullable
                 FROM
                     {table_name}
                 WHERE
                     {condition}
                 ORDER BY
                     ordinal_position;
-            """
+            '''
 
     st.session_state.schema_df = run_query(query)
 
     st.rerun()
 
 
-def get_table_data(arr):
+def get_table_data(ls):
 
-    comma_sep_colnames = ", ".join(arr)
+    comma_sep_colnames = ", ".join(ls)
 
-    table_name = f"`{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}`"
+    if st.session_state.dw == 'BIGQUERY':
+        table_name = f'`{st.session_state.project_id}.{st.session_state.dataset_id}.{st.session_state.table_id}`'
 
     if st.session_state.dw == 'SNOWFLAKE':
-        table_name = f"{st.session_state.wh_input_01}.{st.session_state.wh_input_02}.{st.session_state.table_id}"
+        table_name = f'{st.session_state.db}.{st.session_state.sch}.{st.session_state.tbl}'
 
-    query = f"""
+    query = f'''
                 SELECT
                     {comma_sep_colnames}
                 FROM
                     {table_name}
                 LIMIT
                     {st.session_state.no_of_rows};
-            """
+            '''
 
     st.session_state.df = run_query(query)
     st.session_state.cxtn.execute('DROP TABLE IF EXISTS duckdb_table;')
@@ -522,7 +517,7 @@ def run_query(query):
         if st.session_state.dw == 'BIGQUERY':
             query = client.query(query)
             return query.to_dataframe()
-        elif st.session_state.dw == 'SNOWFLAKE':
+        if st.session_state.dw == 'SNOWFLAKE':
             cxtn = st.connection("snowflake")
             return cxtn.query(query)
     except Exception as e:
@@ -536,15 +531,74 @@ def reset_data():
     st.session_state.reset = False
 
 
-def main():
+def get_columns():
+    if st.session_state.table != '--':
+        # save table selection
+        st.session_state.tbl = st.session_state.table
+        df = st.session_state.result_df[['COLUMN_NAME','DATA_TYPE','IS_NULLABLE','TABLE_NAME','TABLE_SCHEMA']]
+        st.session_state.schema_df = df[(df['TABLE_NAME'] == f'{st.session_state.table}') & 
+                                        (df['TABLE_SCHEMA'] == f'{st.session_state.schema}')]
 
-    st.set_page_config(layout='wide')
+
+def get_tables():
+    if st.session_state.schema != '--':
+        # save schema selection
+        st.session_state.sch = st.session_state.schema
+        st.session_state.tables = ['--']
+        st.session_state.tables = st.session_state.tables + st.session_state.result_df['TABLE_NAME'].unique().tolist()
+
+
+def get_schemas():
+    if st.session_state.database != '--':
+        # save database selection
+        st.session_state.db = st.session_state.database
+        query = f'''SELECT
+                        table_schema, table_name, column_name, data_type, is_nullable
+                    FROM
+                        {st.session_state.snowflake_sample_db}.INFORMATION_SCHEMA.COLUMNS
+                    WHERE NOT
+                        table_schema = 'INFORMATION_SCHEMA'
+                ;'''
+
+        st.session_state.result_df = run_query(query)
+        st.session_state.schemas = ['--']
+        st.session_state.schemas = st.session_state.schemas + st.session_state.result_df['TABLE_SCHEMA'].unique().tolist()
+
+
+def cancel():
+    st.session_state.query_warehouse = False
+    st.session_state.schemas = ['--']
+    st.session_state.tables = ['--']
+    st.rerun()
+
+
+def main(): 
+
+    st.set_page_config(layout='wide')   
+
+    # set Snowflake database id
+    snowflake_sample_db = 'SNOWFLAKE_SAMPLE_DATA'
+
+    if 'snowflake_sample_db' not in st.session_state:
+        st.session_state.snowflake_sample_db = snowflake_sample_db
+
+    if 'databases' not in st.session_state:
+        st.session_state.databases = ['--', snowflake_sample_db]
 
     if 'df' not in st.session_state:
         st.session_state.df = pd.DataFrame()
 
     if 'schema_df' not in st.session_state:
         st.session_state.schema_df = pd.DataFrame()
+
+    if 'tables' not in st.session_state:
+        st.session_state.tables = ['--']
+
+    if 'schemas' not in st.session_state:
+        st.session_state.schemas = ['--']
+
+    if 'metadata_df' not in st.session_state:
+        st.session_state.metadata_df = []
 
     if 'query_warehouse' not in st.session_state:
         st.session_state.query_warehouse = False
@@ -611,30 +665,34 @@ def main():
                     init_state()
                     st.rerun()
         elif st.session_state.query_warehouse:
-            if st.session_state.dw == 'BIGQUERY':
-                label1 = 'Enter project id:*'
-                label2 = 'Enter dataset id:*'
-                label3 = 'Enter table id:*'
-            elif st.session_state.dw == 'SNOWFLAKE':
-                label1 = 'Enter database id:*'
-                label2 = 'Enter schema id:*'
-                label3 = 'Enter table id:*'
-
             with st.container(border=True):
                 if st.session_state.schema_df.empty:
-                    wh_input_01 = st.text_input(label1).lower().strip()
-                    wh_input_02 = st.text_input(label2).lower().strip()
-                    table_id = st.text_input(label3).lower().strip()
-                    with st.container(horizontal=True):
-                        if st.button('Get schema'):
-                            if wh_input_01 and wh_input_02 and table_id:
-                                get_table_schema(
-                                    wh_input_01,  wh_input_02, table_id)
-                            else:
-                                st.error('Missing input(s)')
-                        if st.button('Cancel'):
-                            st.session_state.query_warehouse = False
-                            st.rerun()
+                    if st.session_state.dw == 'BIGQUERY':                       
+                        project_id = st.text_input('Enter project id:').lower().strip()
+                        dataset_id = st.text_input('Enter dataset id:').lower().strip()
+                        table_id = st.text_input('Enter table id:').lower().strip()
+                        with st.container(horizontal=True):                            
+                            if st.button('Get table schema'):
+                                if project_id and dataset_id and table_id:
+                                        get_bigquery_table_schema(
+                                            project_id,  dataset_id, table_id)
+                                else:
+                                    st.error('Missing input(s)')
+                                    st.stop()
+                            if st.button('Cancel', key='cancel0'):
+                                cancel()
+                    if st.session_state.dw == 'SNOWFLAKE':
+                        options = st.session_state.databases
+                        st.selectbox('Select database:', options=options, on_change=get_schemas, key='database')
+                        if len(st.session_state.schemas) > 1:
+                            options = st.session_state.schemas
+                            st.selectbox('Select schema:', options=options, on_change=get_tables, key='schema')
+                        if len(st.session_state.tables) > 1:
+                            options = st.session_state.tables                       
+                            st.selectbox('Select table:', options=options, on_change=get_columns, key='table')
+                        with st.container(horizontal=True):                                   
+                            if st.button('Cancel', key='cancel1'):
+                                cancel()
                 else:
                     with st.container():
                         checkbox_selections_dict = {}
@@ -666,9 +724,9 @@ def main():
                                      options=options, key='no_of_rows')
                         with st.container(horizontal=True):
                             if st.button('Get data'):
-                                columns_array = [
+                                columns_list = [
                                     i for i, v in checkbox_selections_dict.items() if v]
-                                get_table_data(columns_array)
+                                get_table_data(columns_list)
                             if st.button('Cancel'):
                                 st.session_state.query_warehouse = False
                                 st.session_state.schema_df = pd.DataFrame()
