@@ -22,7 +22,8 @@ Simple app to conduct data analysis.
 16. A maximum of four charts can be created on the dashboard.
 17. To ingest data from BiqQuery and Snowflake on your local machine, you must fork this code and create .streamlit/secrets.toml file in the root directory.
 18. Paste the code below in the file with the appropriate parameters from Snowflake and or GCP.
-19. If you want to deploy the app on Streamlit, please follow this https://docs.streamlit.io/develop/tutorials/databases/bigquery and https://docs.streamlit.io/develop/tutorials/databases/snowflake
+19. The datanases and datasets parameters should be set to the databases and datasets on Snowflake and GCP you wish to be queried by the app.
+20. If you want to deploy the app on Streamlit, please follow this https://docs.streamlit.io/develop/tutorials/databases/bigquery and https://docs.streamlit.io/develop/tutorials/databases/snowflake
   
 ```
 [connections.snowflake]
@@ -30,6 +31,7 @@ account = "your_snowflake_account_identifier"
 user = "your_snowflake_username"
 password = "your_snowflake_password"
 warehouse = "your_snowflake_warehouse"
+databases = ["xxxx", "xxxx", ...]
 
 [gcp_service_account]
 type = "service_account"
@@ -42,6 +44,7 @@ auth_uri = "https://accounts.google.com/o/oauth2/auth"
 token_uri = "https://oauth2.googleapis.com/token"
 auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
 client_x509_cert_url = "xxx"
+datasets = ["xxxx", "xxxx", ...]
 ```
 
 
