@@ -401,8 +401,9 @@ datetime_options = [Options.stm, Options.cyc, Options.cqc, Options.cmc, Options.
 def init_state():
     st.session_state.schema_df = pd.DataFrame()
     st.session_state.df = pd.DataFrame()
+    st.session_state.schemas = ['--']
+    st.session_state.tables = ['--']
     cancel()
-
 
 def render_chart(i, update=False):  # rendering charts of dashboard page
     match_axis_colors(i)
@@ -452,6 +453,8 @@ def set_warehouse():
     if st.session_state.data_warehouse != '--':
         st.session_state.dw = st.session_state.data_warehouse
         st.session_state.query_warehouse = True
+        st.session_state.schemas = ['--']
+        st.session_state.tables = ['--']
 
 
 # Create BigQuery API client.
@@ -567,8 +570,6 @@ def get_schemas():
 
 def cancel():
     st.session_state.query_warehouse = False
-    st.session_state.schemas = ['--']
-    st.session_state.tables = ['--']
     st.rerun()
 
 
