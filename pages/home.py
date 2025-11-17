@@ -499,7 +499,7 @@ def run_query(query):
             cxtn = st.connection("snowflake")
             return cxtn.query(query)
     except Exception as e:
-        st.error(e)
+        st.error('Connection error')
         st.stop()
 
 
