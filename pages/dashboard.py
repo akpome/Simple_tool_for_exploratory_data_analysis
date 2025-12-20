@@ -28,9 +28,9 @@ def chart_row(n, j):
                 title = chart[f'chart title {i}']
                 st.markdown(
                     f'<div style="text-align: center; color: grey;">{title}</div>', unsafe_allow_html=True)
+            chart_func = chart_funcs_dict[chart[f'chart {i}']]
             match chart[f'chart {i}']:  # line, area, bar and scatter charts
                 case Charts.LCH.value | Charts.ACH.value | Charts.BCH.value | Charts.SCH.value:
-                    chart_func = chart_funcs_dict[chart[f'chart {i}']]
                     chart_func(chart[f'chart dataframe {i}'],
                                x=chart[f'x-axis {i}'], y=chart[f'y-axis {i}'],
                                color=[colors_dict[i] for i in chart[f'color {i}']])
