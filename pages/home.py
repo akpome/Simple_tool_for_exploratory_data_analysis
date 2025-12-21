@@ -478,7 +478,7 @@ def render_chart(i, update=False):  # rendering charts of dashboard page
         st.session_state[f'chart_settings_{i}'][f'x-axis {i}'] = st.session_state[f'x-axis {i}']
         st.session_state[f'chart_settings_{i}'][f'y-axis {i}'] = st.session_state[f'y-axis {i}']
         st.session_state[f'chart_settings_{i}'][f'color {i}'] = st.session_state[f'color {i}']
-        st.session_state[f'size_{i}'][f'size {i}'] = st.session_state[f'size {i}']
+        st.session_state[f'chart_settings_{i}'][f'size {i}'] = st.session_state[f'size {i}']
     else:
         st.session_state[f'chart_settings_{i}'][f'chart {i}'] = st.session_state[f'chart {i}']
         st.session_state[f'chart_settings_{i}'][f'x-axis {i}'] = st.session_state[f'x-axis {i}']
