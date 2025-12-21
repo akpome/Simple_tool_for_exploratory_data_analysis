@@ -2,8 +2,6 @@ import streamlit as st
 from enum import Enum
 
 # class for data transform options
-
-
 class Options:
     stm = 'Select Transform'
     rer = 'Remove Empty Rows'
@@ -37,8 +35,6 @@ class Options:
     dsc = 'Sort Descending'
 
 # class for chart type options
-
-
 class Charts(Enum):
     LCH = 'Line chart'
     BCH = 'Bar chart'
@@ -49,8 +45,6 @@ class Charts(Enum):
     HCH = 'Histogram chart'
 
 # class for aggregate function options
-
-
 class Agg_Funcs(Enum):
     COUNT = 'Count'
     MEDIAN = 'Median'
@@ -60,8 +54,6 @@ class Agg_Funcs(Enum):
     SUM = 'Sum'
 
 # class for color selection
-
-
 class Colors(Enum):
     RED = 'Red'
     BLUE = 'Blue'
@@ -69,18 +61,6 @@ class Colors(Enum):
     YELLOW = 'Yellow'
     ORANGE = 'Orange'
     PURPLE = 'Purple'
-
-
-# dictionary for chart functions
-chart_funcs_dict = {
-    Charts.LCH.value: st.line_chart,
-    Charts.BCH.value: st.bar_chart,
-    Charts.SCH.value: st.scatter_chart,
-    Charts.ACH.value: st.area_chart,
-    Charts.PCH.value: st.plotly_chart,
-    Charts.DCH.value: st.plotly_chart,
-    Charts.HCH.value: st.plotly_chart
-}
 
 # dictionary for color hex values
 colors_dict = {

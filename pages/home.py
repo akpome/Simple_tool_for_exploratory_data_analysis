@@ -1,4 +1,3 @@
-from statics import chart_funcs_dict as chart_funcs_dict
 from statics import colors_dict as colors_dict
 from statics import Agg_Funcs as Agg_Funcs
 from statics import Options as Options
@@ -406,6 +405,7 @@ def init_state():
 
 def render_chart(i, update=False):  # rendering charts of dashboard page
     match_axis_colors(i)
+    st.session_state.dashboard_title = st.session_state.dash_title
     st.session_state[f'chart_settings_{i}'][f'chart title {i}'] = st.session_state[f'chart title {i}']
     st.session_state[f'chart_settings_{i}'][f'chart dataframe {i}'] = st.session_state.df
     if st.session_state[f'histogram chart {i}']:
@@ -834,6 +834,9 @@ def main():
         if 'charts_array' not in st.session_state:
             st.session_state.charts_array = []
 
+        if 'dashboard_title' not in st.session_state:
+            st.session_state.dashboard_title = ''
+
         if not st.session_state.numberof_charts:
             # container for add chart
             with st.container(horizontal=True, horizontal_alignment='right'):
@@ -841,7 +844,9 @@ def main():
                     st.session_state.numberof_charts += 1
                     st.rerun()
         else:
-
+            with st.container(border=True):
+                st.text_input('Enter dashboard title:', key='dash_title', value=st.session_state.dashboard_title)
+            
             for i in range(st.session_state.numberof_charts):
 
                 if f'chart_settings_{i}' not in st.session_state:
@@ -969,6 +974,8 @@ def main():
                             if st.button(':material/remove: Remoove Chart', key=f'remove_button_{i}'):
                                 st.session_state.charts_array.pop()
                                 st.session_state.numberof_charts -= 1
+                                if st.session_state.numberof_charts == 0:
+                                    st.session_state.dashboard_title = ''
                                 st.rerun()
 
                             validate = validate_input(i)
@@ -989,7 +996,7 @@ def main():
                                 if st.button('Render Chart', key=f'render_button_{i}'):
                                     render_chart(i)
 
-                        # condition to display buttons chart for any other form
+                        # condition to display chart buttons for any other form
                         else:
                             if st.button('Cancel', key=f'cancel1_button_{i}'):
                                 st.switch_page('pages/dashboard.py')
