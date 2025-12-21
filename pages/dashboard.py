@@ -46,15 +46,16 @@ def chart_row(n, j):
                     fig = px.line(chart[f'chart dataframe {i}'], x=chart[f'x-axis {i}'], y=chart[f'y-axis {i}'], 
                                   color_discrete_sequence=[colors_dict[i] for i in chart[f'color {i}']])
                     render_chart(fig)
+                case Charts.BUC.value: # bubble chart
+                    fig = px.scatter(chart[f'chart dataframe {i}'], x=chart[f'x-axis {i}'], y=chart[f'y-axis {i}'], size=chart[f'size {i}'], 
+                                     size_max=40, color_discrete_sequence=[colors_dict[i] for i in chart[f'color {i}']])
+                    render_chart(fig)
                 case Charts.BCH.value: # bar chart
                     fig = px.bar(chart[f'chart dataframe {i}'], x=chart[f'x-axis {i}'], y=chart[f'y-axis {i}'], barmode='group', 
                                  color_discrete_sequence=[colors_dict[i] for i in chart[f'color {i}']])
                     render_chart(fig)
                 case Charts.HCH.value:  # histogram chart
-                    if chart[f'bins {i}']:
-                        bin_size = int(chart[f'bins {i}'])
-                    else:
-                        bin_size = 0
+                    bin_size = int(chart[f'bins {i}'])
                     fig = px.histogram(chart[f'chart dataframe {i}'], x=chart[f'x-axis {i}'], y=chart[f'y-axis {i}'], nbins=bin_size, 
                                        color_discrete_sequence=[colors_dict[i] for i in chart[f'color {i}']])
                     render_chart(fig)

@@ -102,18 +102,11 @@ def on_selection_change(col):  # function for table and column transformation
         case Options.spc:
             dialog(col, 'split', f'Split {col}', 'Enter delimiter:')
         case Options.cat:
-            reset_data()
+            clear_transforms()
         case Options.pvt:
             pivot_dialog()
         case Options.sfh:
-            row = st.session_state.df.iloc[1]
-            is_string_array = all(isinstance(item, str) for item in row)
-            if not is_string_array:
-                st.error('Invalid operation')
-            else:
-                h = st.session_state.df.iloc[0]
-                st.session_state.df = st.session_state.df[1:]
-                st.session_state.df.columns = h
+            first_row_as_header()
         case Options.rnz:
             st.session_state.df[col].fillna(0, inplace=True)
         case Options.rnm:
@@ -135,7 +128,7 @@ def on_selection_change(col):  # function for table and column transformation
         case Options.ccd:
             st.session_state.df.astype({col: float}, inplace=True)
         case Options.trt:
-            st.session_state.df = st.session_state.df.T
+            transpose_dialog()
         case Options.cdc:
             if 'NewDate' not in st.session_state.df.columns:
                 if st.session_state.df[col].dtype == 'object':
@@ -216,6 +209,42 @@ def numeric_date_conversion(col, msg):
 
 
 @st.dialog(' ')
+def first_row_as_header():  # set first row as header
+    st.write('Set First Row as Header')
+    if st.button('Submit'):
+        row = st.session_state.df.iloc[0]
+        is_string_array = all(isinstance(item, str) for item in row)
+        if not is_string_array:
+            st.error('Invalid operation')
+        else:
+            h = st.session_state.df.iloc[0]
+            st.session_state.df = st.session_state.df[1:]
+            st.session_state.df.columns = h
+            # reset table transform selection
+            st.session_state.table = Options.stm
+            st.rerun()
+
+
+@st.dialog(' ')
+def clear_transforms():  # to reset all table transforms
+    st.write('Clear All Transforms')
+    if st.button('Submit'):
+        # reset table transform selection
+        st.session_state.table = Options.stm
+        reset_data()
+
+
+@st.dialog(' ')
+def transpose_dialog():  # to transpose table
+    st.write('Transpose Table')
+    if st.button('Submit'):
+        st.session_state.df = st.session_state.df.T
+        # reset table transform selection
+        st.session_state.table = Options.stm
+        st.rerun()
+
+
+@st.dialog(' ')
 def pivot_dialog():  # to pivot table
     st.write('Pivot Table')
     indices = st.multiselect(f'Index:', options=st.session_state.df.columns)
@@ -232,7 +261,9 @@ def pivot_dialog():  # to pivot table
                 index=indices,
                 columns=column,
                 aggfunc=agg_func
-            )
+            ).reset_index()
+            # reset table transform selection
+            st.session_state.table = Options.stm
             st.rerun()
 
 
@@ -246,12 +277,20 @@ def group_by():  # data transformation: group by
     agg_func_array = [e.value for e in Agg_Funcs]
     agg_func = st.selectbox(f'Select aggregation function:',
                             options=agg_func_array).lower()
+    
+    if values_column in columns:
+        st.error('Invalid operation')
+        st.stop()   
+    
     if st.button('Submit'):
-        if values_column in columns and len(columns) < 1:
+        if len(columns) < 1:
             st.error('Invalid operation')
+            st.stop()   
         else:
             st.session_state.df = st.session_state.df.groupby(
                 columns)[values_column].agg(agg_func).reset_index()
+            # reset table transform selection
+            st.session_state.table = Options.stm
             st.rerun()
 
 
@@ -263,18 +302,29 @@ def filter_table():  # data transformation: filter
         'less than': '<',
         'greater than': '>',
         'less than or equal to': '<=',
-        'greater than or equal to': '>='
+        'greater than or equal to': '>=',
+        'in': 'in',
     }
 
     st.write('Filter')
     column = st.selectbox(
         f'Select column:', options=st.session_state.df.columns)
     operator = st.selectbox(f'Select operator:', options=operators.keys())
-    dialog_input = st.text_input('Enter value', key='filter').lower().strip()
+    dialog_input = st.text_input('Enter value', key='filter').strip()
+
+    if dialog_input not in st.session_state.df[column].astype(str).values and dialog_input:
+        st.error('No matching records found, inputs are case sensitive')
+        st.stop()
 
     if st.button('Submit') and dialog_input:
-        st.session_state.df = st.session_state.df.query(
-            f'{column} {operators[operator]} {dialog_input}')
+        if column in st.session_state.string_cols:
+            st.session_state.df = st.session_state.df.query(
+                f'`{column}` {operators[operator]} "{dialog_input}"')
+        else:
+            st.session_state.df = st.session_state.df.query(
+                f'`{column}` {operators[operator]} {dialog_input}')
+        # reset table transform selection
+        st.session_state.table = Options.stm
         st.rerun()
 
 
@@ -309,7 +359,6 @@ def create_duckdb_table_from_dataframe(df):
 
 
 def load_dataframe(loaded_file, file_ext):  # load uploaded file
-
     if file_ext not in ['.xlsx', 'xls', '.parquet', '.csv']:
         st.error(
             f'Invalid file type: {file_ext}. Please upload a .csv, .parquet or Excel file (.xlsx or .xls).')
@@ -377,11 +426,18 @@ def on_chart_selection_change(chart_key):  # selection of chart type
         case Charts.LCH.value | Charts.ACH.value | Charts.BCH.value | Charts.SCH.value:
             st.session_state[f'pie chart {i}'] = False
             st.session_state[f'histogram chart {i}'] = False
+            st.session_state[f'bubble chart {i}'] = False
         case Charts.PCH.value | Charts.DCH.value:
             st.session_state[f'pie chart {i}'] = True
             st.session_state[f'histogram chart {i}'] = False
+            st.session_state[f'bubble chart {i}'] = False
         case Charts.HCH.value:
             st.session_state[f'histogram chart {i}'] = True
+            st.session_state[f'pie chart {i}'] = False
+            st.session_state[f'bubble chart {i}'] = False
+        case Charts.BUC.value:
+            st.session_state[f'bubble chart {i}'] = True
+            st.session_state[f'histogram chart {i}'] = False
             st.session_state[f'pie chart {i}'] = False
 
 
@@ -417,6 +473,12 @@ def render_chart(i, update=False):  # rendering charts of dashboard page
         st.session_state[f'chart_settings_{i}'][f'chart {i}'] = st.session_state[f'chart {i}']
         st.session_state[f'chart_settings_{i}'][f'labels {i}'] = st.session_state[f'labels {i}']
         st.session_state[f'chart_settings_{i}'][f'values {i}'] = st.session_state[f'values {i}']
+    elif st.session_state[f'bubble chart {i}']:
+        st.session_state[f'chart_settings_{i}'][f'chart {i}'] = st.session_state[f'chart {i}']
+        st.session_state[f'chart_settings_{i}'][f'x-axis {i}'] = st.session_state[f'x-axis {i}']
+        st.session_state[f'chart_settings_{i}'][f'y-axis {i}'] = st.session_state[f'y-axis {i}']
+        st.session_state[f'chart_settings_{i}'][f'color {i}'] = st.session_state[f'color {i}']
+        st.session_state[f'size_{i}'][f'size {i}'] = st.session_state[f'size {i}']
     else:
         st.session_state[f'chart_settings_{i}'][f'chart {i}'] = st.session_state[f'chart {i}']
         st.session_state[f'chart_settings_{i}'][f'x-axis {i}'] = st.session_state[f'x-axis {i}']
@@ -432,10 +494,11 @@ def render_chart(i, update=False):  # rendering charts of dashboard page
 
 
 def validate_input(i):  # validate all required inputs are present
-    if st.session_state[f'chart title {i}'] and (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}']
-                                                 and st.session_state[f'y-axis {i}']) or (st.session_state[f'chart {i}']
-                                                                                          and st.session_state[f'labels {i}'] and st.session_state[f'values {i}']) or (st.session_state[f'chart {i}']
-                                                                                                                                                                       and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}']):
+    if st.session_state[f'chart title {i}'] and \
+          (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}']) or \
+              (st.session_state[f'chart {i}'] and st.session_state[f'labels {i}'] and st.session_state[f'values {i}']) or \
+                (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}']) or \
+                    (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'size {i}'] and st.session_state[f'color {i}']):
         return True
     else:
         return False
@@ -641,6 +704,15 @@ def main():
     if 'column_datatype_dict' not in st.session_state:
         st.session_state.column_datatype_dict = {}
 
+    if 'numeric_cols' not in st.session_state:
+        st.session_state.numeric_cols = []
+
+    if 'string_cols' not in st.session_state:
+        st.session_state.string_cols = []
+
+    if 'datetime_cols' not in st.session_state:
+        st.session_state.datetime_cols = []
+
     st.markdown('##### Simple tool for exploratory data analysis')
 
     tab1, tab2, tab3, tab4 = st.tabs(
@@ -650,22 +722,21 @@ def main():
     with tab1:
         if not st.session_state.df.empty:
             # get column data types
-            numeric_cols = st.session_state.df.select_dtypes(
+            st.session_state.numeric_cols = st.session_state.df.select_dtypes(
                 include=[np.number]).columns
-            string_cols = st.session_state.df.select_dtypes(
+            st.session_state.string_cols = st.session_state.df.select_dtypes(
                 include='object').columns
-            datetime_cols = st.session_state.df.select_dtypes(
+            st.session_state.datetime_cols = st.session_state.df.select_dtypes(
                 include='datetime64').columns
 
-            for col in string_cols:
+            for col in st.session_state.string_cols:
                 st.session_state.column_datatype_dict[col] = 'String'
 
-            for col in datetime_cols:
+            for col in st.session_state.datetime_cols:
                 st.session_state.column_datatype_dict[col] = 'Datetime'
 
             metadata_df = get_column_metadata(
-                st.session_state.df, numeric_cols, string_cols)
-
+                st.session_state.df, st.session_state.numeric_cols, st.session_state.string_cols)
             if st.session_state.reset:
                 with st.container(horizontal=True, horizontal_alignment='right'):
                     if st.button('Reset data'):
@@ -806,13 +877,13 @@ def main():
                          args=['table'])
 
         for col in st.session_state.df.columns:
-            if col in datetime_cols:
+            if col in st.session_state.datetime_cols:
                 # date column transform options
                 options = datetime_options
-            elif col in numeric_cols:
+            elif col in st.session_state.numeric_cols:
                 # numeric column transform options
                 options = numeric_options
-            elif col in string_cols:
+            elif col in st.session_state.string_cols:
                 # string column transform options
                 options = string_options
             st.selectbox(f'{col} Column Transform',
@@ -861,6 +932,9 @@ def main():
                 if f'y-axis {i}' not in st.session_state:
                     st.session_state[f'y-axis {i}'] = []
 
+                if f'size {i}' not in st.session_state:
+                    st.session_state[f'size {i}'] = []
+
                 if f'color {i}' not in st.session_state:
                     st.session_state[f'color {i}'] = []
 
@@ -872,6 +946,9 @@ def main():
 
                 if f'pie chart {i}' not in st.session_state:
                     st.session_state[f'pie chart {i}'] = False
+
+                if f'bubble chart {i}' not in st.session_state:
+                    st.session_state[f'bubble chart {i}'] = False
 
                 if f'histogram chart {i}' not in st.session_state:
                     st.session_state[f'histogram chart {i}'] = False
@@ -934,10 +1011,37 @@ def main():
                         if f'x-axis {i}' in chart:
                             st.success(chart[f'y-axis {i}'])
 
-                        st.number_input('Enter bin size:*', key=f'bins {i}')
+                        st.number_input('Enter bin size:', key=f'bins {i}')
 
                         if f'bins {i}' in chart:
                             st.success(chart[f'bins {i}'])
+
+                    elif st.session_state[f'bubble chart {i}']:
+
+                        st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
+                                     key=f'x-axis {i}')
+
+                        if f'x-axis {i}' in chart:
+                            st.success(chart[f'x-axis {i}'])
+
+                        st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
+                                       key=f'y-axis {i}')
+
+                        if f'y-axis {i}' in chart:
+                            st.success(chart[f'y-axis {i}'])
+
+                        st.multiselect('Select size:*', options=st.session_state.df.columns,
+                                       key=f'size {i}')
+
+                        if f'size {i}' in chart:
+                            st.success(chart[f'size {i}'])
+                            
+                        colors_array = [e.value for e in Colors]
+                        st.multiselect('Select color(s):*', options=colors_array,
+                                       key=f'color {i}')
+
+                        if f'color {i}' in chart:
+                            st.success(chart[f'color {i}'])
                     else:
 
                         st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
