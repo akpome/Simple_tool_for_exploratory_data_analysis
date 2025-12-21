@@ -38,8 +38,8 @@ class Options:
 class Charts(Enum):
     LCH = 'Line chart'
     BCH = 'Bar chart'
-    SCH = 'Scatter chart'
     BUC = 'Bubble chart'
+    SCH = 'Scatter chart'
     ACH = 'Area chart'
     PCH = 'Pie chart'
     DCH = 'Donut chart'
