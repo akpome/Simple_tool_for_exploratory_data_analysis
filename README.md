@@ -24,7 +24,17 @@ Simple app to conduct data analysis.
 18. Paste the code below in the file with the appropriate parameters from Snowflake and or GCP.
 19. The datanases and datasets parameters should be set to the databases and datasets on Snowflake and GCP you wish to be queried by the app.
 20. If you want to deploy the app on Streamlit, please follow this https://docs.streamlit.io/develop/tutorials/databases/bigquery and https://docs.streamlit.io/develop/tutorials/databases/snowflake
-  
+
+<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/0234613b-b512-4c43-8479-e996fcd09c12" />
+
+<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/fffbc45a-773e-4628-add5-57dbe979a6a0" />
+
+<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/1b6b7208-aebd-4567-8050-b1cb444105b9" />
+
+<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/48c3ffcd-cf39-4d61-84d0-ee5bb6147a02" />
+
+<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/d78a58fd-f0a7-4e32-85d1-7689f0a32379" />
+
 ```
 [connections.snowflake]
 account = "your_snowflake_account_identifier"
