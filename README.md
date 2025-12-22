@@ -33,9 +33,8 @@ Simple app to conduct data analysis.
 
 <img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/48c3ffcd-cf39-4d61-84d0-ee5bb6147a02" />
 
-<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/d78a58fd-f0a7-4e32-85d1-7689f0a32379" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/f92648b5-9b33-4483-adb4-e8daa28d21e2" />
 
-<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/c4451bb7-c258-43d4-83c5-d308ad2c024f" />
 
 
 ```
