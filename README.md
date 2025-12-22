@@ -25,13 +25,13 @@ Simple app to conduct data analysis.
 19. The datanases and datasets parameters should be set to the databases and datasets on Snowflake and GCP you wish to be queried by the app.
 20. If you want to deploy the app on Streamlit, please follow this https://docs.streamlit.io/develop/tutorials/databases/bigquery and https://docs.streamlit.io/develop/tutorials/databases/snowflake
 
-<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/0234613b-b512-4c43-8479-e996fcd09c12" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/b2329cb7-b8e4-4829-84f2-be653ffe9629" />
 
-<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/fffbc45a-773e-4628-add5-57dbe979a6a0" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/92ee559e-4271-4f5b-94ed-95c6bb2a6f33" />
 
-<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/1b6b7208-aebd-4567-8050-b1cb444105b9" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/77ca2779-4913-4751-a572-cec8a118eca4" />
 
-<img width="940" height="499" alt="image" src="https://github.com/user-attachments/assets/48c3ffcd-cf39-4d61-84d0-ee5bb6147a02" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/362dcd44-cfd1-4fe4-a6e1-963c55084478" />
 
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/f92648b5-9b33-4483-adb4-e8daa28d21e2" />
 
