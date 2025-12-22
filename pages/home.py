@@ -649,7 +649,6 @@ def cancel():
     st.session_state.snowflake_schemas = ['--']
     st.session_state.snowflake_tables = ['--']
     st.session_state.bigquery_tables = ['--']
-    st.rerun()
 
 
 def main():
@@ -781,6 +780,7 @@ def main():
                         with st.container(horizontal=True):
                             if st.button('Cancel', key='cancel0'):
                                 cancel()
+                                st.rerun()
                     if st.session_state.dw == 'SNOWFLAKE':
                         options = st.session_state.databases
                         st.selectbox('Select database:', options=options,
@@ -796,6 +796,7 @@ def main():
                         with st.container(horizontal=True):
                             if st.button('Cancel', key='cancel1'):
                                 cancel()
+                                st.rerun()
                 else:
                     with st.container():
                         checkbox_selections_dict = {}
