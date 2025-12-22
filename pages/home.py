@@ -47,8 +47,7 @@ def get_column_metadata(df, ncols, scols):
         if col in scols:
             metadata['Empty String Count'] = metadata.get(
                 'Empty String Count', pd.Series(dtype=int))
-            metadata['Empty String Count'][col] = (
-                df[col].astype(str).str.strip() == '').sum()
+            metadata['Empty String Count'][col] = (df[col].astype(str).str.strip() == '').sum()
 
         if col in ncols:
             metadata['Zero Count'] = metadata.get(
@@ -211,7 +210,7 @@ def numeric_date_conversion(col, msg):
 @st.dialog(' ')
 def first_row_as_header():  # set first row as header
     st.write('Set First Row as Header')
-    if st.button('Submit'):
+    if st.button('Submit', key='first_row_header'):
         row = st.session_state.df.iloc[0]
         is_string_array = all(isinstance(item, str) for item in row)
         if not is_string_array:
@@ -228,17 +227,25 @@ def first_row_as_header():  # set first row as header
 @st.dialog(' ')
 def clear_transforms():  # to reset all table transforms
     st.write('Clear All Transforms')
-    if st.button('Submit'):
+    if st.button('Submit', key='clear_transform'):
         # reset table transform selection
         st.session_state.table = Options.stm
         reset_data()
+        st.rerun()
 
 
 @st.dialog(' ')
 def transpose_dialog():  # to transpose table
     st.write('Transpose Table')
-    if st.button('Submit'):
-        st.session_state.df = st.session_state.df.T
+    if st.button('Submit', key='transpose_transform'):
+        df = st.session_state.df.T
+        index_df = pd.DataFrame(df.index)
+        value_df = pd.DataFrame(df.values)
+        concat_df = pd.concat([index_df, value_df], axis=1)
+        h = concat_df.iloc[0]
+        concat_df = concat_df[1:]
+        concat_df.columns = h
+        st.session_state.df = concat_df
         # reset table transform selection
         st.session_state.table = Options.stm
         st.rerun()
@@ -252,7 +259,7 @@ def pivot_dialog():  # to pivot table
     values = st.selectbox(f'Values:', options=st.session_state.df.columns)
     agg_func = st.selectbox(f'Aggregate function:', options=[
                             e.value for e in Agg_Funcs]).lower()
-    if st.button('Submit') and indices:
+    if st.button('Submit', key='pivot_transform') and indices:
         if column in indices or values in indices or column == values:
             st.error('Invalid selections')
         else:
@@ -282,7 +289,7 @@ def group_by():  # data transformation: group by
         st.error('Invalid operation')
         st.stop()   
     
-    if st.button('Submit'):
+    if st.button('Submit', key='groupby_transform'):
         if len(columns) < 1:
             st.error('Invalid operation')
             st.stop()   
@@ -844,7 +851,7 @@ def main():
                         load_dataframe(uploaded_file, file_ext)
 
                 except Exception as e:
-                    st.error('File upload error')
+                    st.error(e)
                     st.stop()
 
             # import file container
@@ -1030,7 +1037,7 @@ def main():
                         if f'y-axis {i}' in chart:
                             st.success(chart[f'y-axis {i}'])
 
-                        st.multiselect('Select size:*', options=st.session_state.df.columns,
+                        st.selectbox('Select size:*', options=st.session_state.df.columns,
                                        key=f'size {i}')
 
                         if f'size {i}' in chart:
