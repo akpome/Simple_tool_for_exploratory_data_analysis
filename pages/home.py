@@ -1035,17 +1035,17 @@ def main():
                         if f'x-axis {i}' in chart:
                             st.success(chart[f'x-axis {i}'])
 
-                        st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
-                                       key=f'y-axis {i}')
-
-                        if f'y-axis {i}' in chart:
-                            st.success(chart[f'y-axis {i}'])
-
                         st.selectbox('Select size:*', options=st.session_state.df.columns,
                                        key=f'size {i}')
 
                         if f'size {i}' in chart:
                             st.success(chart[f'size {i}'])
+
+                        st.multiselect('Select y-axis:*', options=st.session_state.df.columns,
+                                       key=f'y-axis {i}')
+
+                        if f'y-axis {i}' in chart:
+                            st.success(chart[f'y-axis {i}'])
                             
                         colors_array = [e.value for e in Colors]
                         st.multiselect('Select color(s):*', options=colors_array,
