@@ -1,8 +1,11 @@
 from statics import colors_dict as colors_dict
 from statics import Agg_Funcs as Agg_Funcs
+from google.oauth2 import service_account
 from statics import Options as Options
 from statics import Colors as Colors
 from statics import Charts as Charts
+from google.cloud import bigquery
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -14,9 +17,6 @@ import os
 import io
 import re
 import sys
-from pathlib import Path
-from google.oauth2 import service_account
-from google.cloud import bigquery
 
 
 # required to import statics from parent directory
