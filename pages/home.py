@@ -501,12 +501,15 @@ def render_chart(i, update=False):  # rendering charts of dashboard page
 
 
 def validate_input(i):  # validate all required inputs are present
-    if st.session_state[f'chart title {i}'] and \
-          (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}']) or \
-              (st.session_state[f'chart {i}'] and st.session_state[f'labels {i}'] and st.session_state[f'values {i}']) or \
-                (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}']) or \
-                    (st.session_state[f'chart {i}'] and st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'size {i}'] and st.session_state[f'color {i}']):
-        return True
+    if st.session_state[f'chart title {i}']:
+        if st.session_state[f'histogram chart {i}']:
+            return (st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'])
+        elif st.session_state[f'pie chart {i}']: # pie, donut chart
+            return (st.session_state[f'labels {i}'] and st.session_state[f'values {i}'])
+        elif st.session_state[f'bubble chart {i}']:
+            return (st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'size {i}'] and st.session_state[f'color {i}']) 
+        else: # line, bar, area, scatter chart
+            return (st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}'])  
     else:
         return False
 
@@ -514,7 +517,7 @@ def validate_input(i):  # validate all required inputs are present
 def match_axis_colors(i):  # match selected colors with y-axis
     if f'y-axis {i}' in st.session_state and st.session_state[f'color {i}']:
         if len(st.session_state[f'y-axis {i}']) != len(st.session_state[f'color {i}']):
-            st.error('y-axis selections must be equal to selected colors')
+            st.error('y-axis selections must match selected colors')
             st.stop()
 
 
@@ -962,7 +965,7 @@ def main():
                     st.session_state[f'histogram chart {i}'] = False
 
                 if f'bins {i}' not in st.session_state:
-                    st.session_state[f'bins {i}'] = 0
+                    st.session_state[f'bins {i}'] = 0.0
 
                 chart = {}
 
@@ -1050,7 +1053,8 @@ def main():
 
                         if f'color {i}' in chart:
                             st.success(chart[f'color {i}'])
-                    else:
+                            
+                    else:# line, bar, area, scatter chart
 
                         st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
                                      key=f'x-axis {i}')
