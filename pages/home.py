@@ -501,13 +501,13 @@ def render_chart(i, update=False):  # rendering charts of dashboard page
 
 
 def validate_input(i):  # validate all required inputs are present
-    if st.session_state[f'chart title {i}']:
+    if st.session_state[f'chart title {i}'] and st.session_state[f'chart {i}']:
         if st.session_state[f'histogram chart {i}']:
             return (st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'])
         elif st.session_state[f'pie chart {i}']: # pie, donut chart
             return (st.session_state[f'labels {i}'] and st.session_state[f'values {i}'])
         elif st.session_state[f'bubble chart {i}']:
-            return (st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'size {i}'] and st.session_state[f'color {i}']) 
+            return (st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}'] and st.session_state[f'size {i}']) 
         else: # line, bar, area, scatter chart
             return (st.session_state[f'x-axis {i}'] and st.session_state[f'y-axis {i}'] and st.session_state[f'color {i}'])  
     else:
@@ -1053,7 +1053,7 @@ def main():
 
                         if f'color {i}' in chart:
                             st.success(chart[f'color {i}'])
-                            
+
                     else:# line, bar, area, scatter chart
 
                         st.selectbox('Select x-axis:*', options=st.session_state.df.columns,
