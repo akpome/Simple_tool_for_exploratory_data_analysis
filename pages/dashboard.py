@@ -75,15 +75,13 @@ def main():
                 f'<div style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px;">{st.session_state.dashboard_title}</div>', unsafe_allow_html=True)
         with st.container():
             num_of_charts = len(st.session_state.charts_array)
-            num_of_charts_per_row = 2
-            try:
-                x = ceil(num_of_charts/num_of_charts_per_row)
-                for i in range(x):
+            num_of_charts_per_row = 2            
+            x = ceil(num_of_charts/num_of_charts_per_row)
+            for i in range(x):
+                try:
                     chart_row(num_of_charts, i)
-
-            except Exception as e:
-                st.error(e)
-
+                except Exception as e:
+                    st.error("Error rendering chart. Please go back to the Home page and re-generate the chart.")
 
 if __name__ == '__main__':
     main()
