@@ -81,7 +81,7 @@ def main():
                 try:
                     chart_row(num_of_charts, i)
                 except Exception as e:
-                    st.error("Error rendering chart. Please go back to the Home page and re-generate the chart")
+                    st.error("Error rendering chart. Please go back to the Home page and re-generate the chart.")
 
 if __name__ == '__main__':
     main()
