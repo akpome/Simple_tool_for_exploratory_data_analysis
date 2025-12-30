@@ -12,9 +12,12 @@ sys.path.insert(0, str(dir))
 
 
 def render_chart(fig):
-    fig.update_layout(yaxis_title=None)
-    fig.update_layout(legend_title_text="")
-    st.plotly_chart(fig)
+    try:
+        fig.update_layout(yaxis_title=None)
+        fig.update_layout(legend_title_text="")
+        st.plotly_chart(fig)    
+    except Exception as e:
+        st.error("Error rendering chart. Please go back to the Home page and re-generate the chart.")
 
 
 def chart_row(n, j):
@@ -78,10 +81,7 @@ def main():
             num_of_charts_per_row = 2            
             x = ceil(num_of_charts/num_of_charts_per_row)
             for i in range(x):
-                try:
-                    chart_row(num_of_charts, i)
-                except Exception as e:
-                    st.error("Error rendering chart. Please go back to the Home page and re-generate the chart.")
+                chart_row(num_of_charts, i)
 
 if __name__ == '__main__':
     main()
